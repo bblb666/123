@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工业设备运转录像 - 视频频道</title>
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --card: #1a1a1a;
+            --text: #e0e0e0;
+            --muted: #888888;
+            --border: #2a2a2a;
+            --accent: #ff4444;
+            --primary: #3b82f6;
+            --tag-bg: #1f2937;
+            --tag-text: #9ca3af;
+            --hover-bg: #222222;
+            --seekbar-bg: #333333;
+            --seekbar-progress: #ff4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: #141414;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .top-bar .logo {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+
+        .top-bar .logo .icon {
+            color: var(--accent);
+            font-size: 20px;
+        }
+
+        .top-bar .nav-links {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .top-bar .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .top-bar .nav-links a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .video-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .video-card:hover {
+            background: var(--hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .thumbnail-area {
+            background: #111;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .thumbnail-area .play-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #000;
+            transition: transform 0.2s;
+            z-index: 2;
+        }
+
+        .video-card:hover .play-icon {
+            transform: scale(1.08);
+        }
+
+        .thumbnail-area .duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-size: 10px;
+            z-index: 2;
+        }
+
+        .thumbnail-area .frame-hint {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(255, 68, 68, 0.85);
+            color: #fff;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-size: 9px;
+            z-index: 2;
+            letter-spacing: 1px;
+        }
+
+        .thumbnail-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            user-select: none;
+        }
+
+        .video-info {
+            padding: 14px 16px;
+        }
+
+        .video-info h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-info .meta {
+            font-size: 10px;
+            color: var(--muted);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .video-info .tag {
+            display: inline-block;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+            margin-top: 6px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #1a1a1a;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: modalIn 0.25s ease;
+            border: 1px solid var(--border);
+        }
+
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal .player-area {
+            background: #000;
+            height: 360px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-radius: 14px 14px 0 0;
+            overflow: hidden;
+        }
+
+        .player-area .player-icon {
+            font-size: 80px;
+            opacity: 0.7;
+            user-select: none;
+        }
+
+        .player-area .frame-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+
+        .player-area .frame-overlay.visible {
+            opacity: 1;
+        }
+
+        .seek-bar-container {
+            padding: 10px 20px;
+            background: #111;
+        }
+
+        .seek-bar {
+            width: 100%;
+            height: 5px;
+            background: var(--seekbar-bg);
+            border-radius: 3px;
+            appearance: none;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .seek-bar::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+
+        .seek-time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--muted);
+            padding: 4px 0;
+        }
+
+        .modal .video-details {
+            padding: 18px 22px;
+        }
+
+        .modal .video-details h3 {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .modal .video-details .desc {
+            font-size: 12px;
+            color: #aaa;
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .modal .video-details .frame-info {
+            background: #111;
+            border: 1px solid #333;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+            color: #ccc;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 8px;
+        }
+
+        .modal .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .modal .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .cross-ref-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--primary);
+            text-decoration: none;
+            padding: 3px 10px;
+            background: #1a2740;
+            border-radius: 3px;
+            transition: background 0.15s;
+        }
+
+        .cross-ref-link:hover {
+            background: #1e3050;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #fff;
+            color: #000;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+            font-weight: 600;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .modal .player-area {
+                height: 200px;
+            }
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo">
+            <span class="icon">▶</span> 工业设备频道
+        </div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="group-chat.html">群聊</a>
+            <a href="archive.html">档案馆</a>
+            <a href="blog.html">博客</a>
+            <a href="doc-share.html">文档</a>
+            <a href="weather.html">环境监测</a>
+            <a href="ftp.html">FTP</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div class="video-grid">
+
+            <!-- 视频1：数控磨床运转录像 -->
+            <div class="video-card" onclick="openVideo('vid1')">
+                <div class="thumbnail-area">
+                    <div class="thumbnail-bg">⚙️</div>
+                    <div class="play-icon">▶</div>
+                    <div class="duration">05:12</div>
+                    <div class="frame-hint">⏱ 关键帧</div>
+                </div>
+                <div class="video-info">
+                    <h3>数控磨床主轴运转振动录像（1998年产）</h3>
+                    <div class="meta">
+                        <span>👤 vibration_lab</span>
+                        <span>👁 1.4K</span>
+                        <span>📅 04-24</span>
+                    </div>
+                    <span class="tag">振动分析</span>
+                    <span class="tag">老设备</span>
+                </div>
+            </div>
+
+            <!-- 视频2：信号塔指示灯录像 -->
+            <div class="video-card" onclick="openVideo('vid2')">
+                <div class="thumbnail-area">
+                    <div class="thumbnail-bg">🗼</div>
+                    <div class="play-icon">▶</div>
+                    <div class="duration">03:47</div>
+                    <div class="frame-hint">⏱ 关键帧</div>
+                </div>
+                <div class="video-info">
+                    <h3>废弃通信塔夜间指示灯闪烁录像</h3>
+                    <div class="meta">
+                        <span>👤 王工-设备维护</span>
+                        <span>👁 2.1K</span>
+                        <span>📅 04-29</span>
+                    </div>
+                    <span class="tag">信号塔</span>
+                    <span class="tag">实地拍摄</span>
+                </div>
+            </div>
+
+            <!-- 视频3：频谱仪实时画面 -->
+            <div class="video-card" onclick="openVideo('vid3')">
+                <div class="thumbnail-area">
+                    <div class="thumbnail-bg">📊</div>
+                    <div class="play-icon">▶</div>
+                    <div class="duration">08:33</div>
+                </div>
+                <div class="video-info">
+                    <h3>频谱分析仪1.42GHz频段实时监测录像</h3>
+                    <div class="meta">
+                        <span>👤 freq_watcher</span>
+                        <span>👁 3.8K</span>
+                        <span>📅 04-28</span>
+                    </div>
+                    <span class="tag">频谱分析</span>
+                    <span class="tag">1.42GHz</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 跨平台导航 -->
+        <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px; margin-top:16px;">
+            <p style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;">🔗 关联平台</p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <a href="forum.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#1a2740;border-radius:4px;">📋 论坛讨论</a>
+                <a href="doc-share.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#1a2740;border-radius:4px;">📄 二进制数据</a>
+                <a href="ftp.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#1a2740;border-radius:4px;">📁 IQ数据</a>
+                <a href="blog.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#1a2740;border-radius:4px;">📝 博客分析</a>
+                <a href="weather.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#1a2740;border-radius:4px;">🌡 环境数据</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 视频播放弹窗 -->
+    <div class="modal-overlay" id="videoModal">
+        <div class="modal" id="videoModalContent"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer class="footer">
+        <p>© 2026 工业设备频道 | 技术录像存档</p>
+        <p style="margin-top:4px;">
+            <a href="forum.html">论坛</a> ·
+            <a href="doc-share.html">文档</a> ·
+            <a href="ftp.html">FTP</a> ·
+            <a href="blog.html">博客</a> ·
+            <a href="weather.html">环境</a>
+        </p>
+    </footer>
+
+    <script>
+        const videos = {
+            'vid1': {
+                title: '数控磨床主轴运转振动录像（1998年产）',
+                author: 'vibration_lab',
+                date: '2026-04-24',
+                duration: '05:12',
+                description: `
+                    <p>本录像记录了1998年出厂的数控磨床在空载运行时的主轴振动情况。</p>
+                    <p>注意观察：在录像的<strong style="color:#ff4444;">第127秒</strong>处，
+                    画面出现了一次明显的抖动。这不是摄像机故障，
+                    而是机床自身振动模式的外在表现。</p>
+                    <p>该抖动与主轴振动的极低频分量（约0.0078Hz）相关。</p>
+                    <p>逐帧分析第127秒前后的画面可能发现额外信息。</p>
+                `,
+                keyFrame: '127',
+                frameData: `01000101 01000011 01001000 01001111
+        01011111 01001111 01001110
+
+        # 以上二进制数据从第127秒关键帧中提取
+        # 转换为ASCII后得到一个短语
+        # 完整数据请参考文档共享平台 DOC-ECHO-003`,
+                refLink: 'doc-share.html'
+            },
+            'vid2': {
+                title: '废弃通信塔夜间指示灯闪烁录像',
+                author: '王工-设备维护',
+                date: '2026-04-29',
+                duration: '03:47',
+                description: `
+                    <p>拍摄于2026年4月29日晚。通信塔位于市区边缘，官方标注为"停用"。</p>
+                    <p>注意观察设备间的绿色指示灯：它按照一定的规律闪烁，
+                    每分钟大约闪烁<strong style="color:#ff4444;">9次</strong>。</p>
+                    <p>换算频率：9次/分钟 = <strong style="color:#ff4444;">0.15Hz</strong>。</p>
+                    <p>这个频率与信号塔发射的脉冲周期（127秒≈0.00787Hz）可能存在倍频关系。</p>
+                    <p>塔身铭牌在录像第2分15秒处清晰可见，上面印有"ECHO-NODE-04"。</p>
+                `,
+                keyFrame: '135',
+                frameData: `# 第2分15秒处铭牌画面
+        设备型号：SX-720/ECHO
+        节点编号：ECHO-NODE-04
+        出厂日期：1998-06
+
+        # 铭牌照片也在二手交易平台可见`,
+                refLink: 'shop.html'
+            },
+            'vid3': {
+                title: '频谱分析仪1.42GHz频段实时监测录像',
+                author: 'freq_watcher',
+                date: '2026-04-28',
+                duration: '08:33',
+                description: `
+                    <p>使用RTL-SDR配合LNA在1.42GHz频段进行的实时频谱监测。</p>
+                    <p>录像中可以观察到大约每<strong style="color:#ff4444;">127秒</strong>出现一次脉冲尖峰。
+                    请拖动进度条到2分07秒、4分14秒、6分21秒附近查看。</p>
+                    <p>每个脉冲持续约2.3秒，峰值功率约-45dBm。</p>
+                    <p>IQ采样数据已上传至FTP服务器供下载分析。</p>
+                `,
+                keyFrame: '127',
+                frameData: `# 频谱峰值出现时间点（录像内时间戳）
+        00:02:07 - 第一个脉冲
+        00:04:14 - 第二个脉冲（间隔127秒）
+        00:06:21 - 第三个脉冲（间隔127秒）
+
+        # 脉冲间隔精确为127秒
+        # IQ数据文件：1420mhz_iq_20260428.bin`,
+                refLink: 'ftp.html'
+            }
+        };
+
+        function openVideo(id) {
+            const vid = videos[id];
+            if (!vid) return;
+
+            const modalHTML = `
+                <div class="player-area" id="playerArea">
+                  <button class="close-btn" onclick="closeVideoModal()">✕</button>
+                  <span class="player-icon">▶</span>
+                  <div class="frame-overlay" id="frameOverlay"></div>
+                </div>
+                <div class="seek-bar-container">
+                  <div class="seek-time">
+                    <span id="currentTime">00:00</span>
+                    <span>${vid.duration}</span>
+                  </div>
+                  <input type="range" class="seek-bar" id="seekBar" min="0" max="${parseInt(vid.duration.split(':')[0]) * 60 + parseInt(vid.duration.split(':')[1])}" value="0" oninput="seekVideo('${id}', this.value)">
+                </div>
+                <div class="video-details">
+                  <h3>${vid.title}</h3>
+                  <div class="meta" style="font-size:10px;color:var(--muted);margin-bottom:8px;">
+                    👤 ${vid.author} · 📅 ${vid.date} · ⏱ ${vid.duration}
+                  </div>
+                  <div class="desc">${vid.description}</div>
+                  <div class="frame-info" id="frameInfo">
+                    <span style="color:#666;">拖动进度条到关键帧位置以查看隐藏数据...</span>
+                  </div>
+                  <a href="${vid.refLink}" class="cross-ref-link">📎 查看相关数据 →</a>
+                </div>
+            `;
+
+            document.getElementById('videoModalContent').innerHTML = modalHTML;
+            document.getElementById('videoModal').classList.add('show');
+
+            // 重置状态
+            document.getElementById('frameOverlay').classList.remove('visible');
+            document.getElementById('frameInfo').innerHTML = '<span style="color:#666;">拖动进度条到关键帧位置以查看隐藏数据...</span>';
+            document.getElementById('currentTime').textContent = '00:00';
+            document.getElementById('seekBar').value = 0;
+        }
+
+        function closeVideoModal() {
+            document.getElementById('videoModal').classList.remove('show');
+        }
+
+        function seekVideo(id, seconds) {
+            const vid = videos[id];
+            const keyFrameSec = parseInt(vid.keyFrame);
+            const min = Math.floor(seconds / 60);
+            const sec = seconds % 60;
+            const timeStr = String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+            document.getElementById('currentTime').textContent = timeStr;
+
+            const overlay = document.getElementById('frameOverlay');
+            const frameInfo = document.getElementById('frameInfo');
+
+            if (seconds === keyFrameSec || Math.abs(seconds - keyFrameSec) <= 1) {
+                overlay.classList.add('visible');
+                overlay.textContent = '⚡ 关键帧：隐藏数据已捕获';
+                frameInfo.innerHTML = `<pre style="color:#ffcc00;">${vid.frameData}</pre>`;
+                showToast('🔍 发现隐藏数据帧！');
+            } else if (Math.abs(seconds - keyFrameSec) <= 3) {
+                overlay.classList.add('visible');
+                overlay.textContent = '接近关键帧...';
+                overlay.style.opacity = '0.5';
+                frameInfo.innerHTML = '<span style="color:#ffaa00;">接近关键时间点，请微调进度条至 ' + vid.keyFrame + ' 秒...</span>';
+            } else {
+                overlay.classList.remove('visible');
+                overlay.style.opacity = '';
+                frameInfo.innerHTML = '<span style="color:#666;">继续拖动进度条以寻找关键帧...</span>';
+            }
+        }
+
+        document.getElementById('videoModal').addEventListener('click', function(e) {
+            if (e.target === this) closeVideoModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeVideoModal();
+        });
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        console.log('工业设备视频频道已加载。');
+        console.log('关键帧位置：vid1=127秒（二进制数据），vid2=135秒（铭牌），vid3=127秒（频谱脉冲）');
+        console.log('提示：拖动进度条到关键帧附近可触发隐藏数据显示。');
+    </script>
+</body>
+</html>

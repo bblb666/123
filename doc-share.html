@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技术文档共享平台 - 在线协作</title>
+    <style>
+        :root {
+            --bg: #f9fafb;
+            --card: #ffffff;
+            --header-bg: #1e293b;
+            --text: #334155;
+            --muted: #94a3b8;
+            --border: #e2e8f0;
+            --primary: #3b82f6;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --redacted-bg: #1e293b;
+            --redacted-hover: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: var(--header-bg);
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .top-bar .logo {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-bar .logo .icon {
+            font-size: 20px;
+        }
+
+        .top-bar .nav-links {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .top-bar .nav-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .top-bar .nav-links a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .doc-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px 28px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            transition: box-shadow 0.2s;
+        }
+
+        .doc-card:hover {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .doc-card .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .doc-card .doc-id {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        .doc-card h3 {
+            font-size: 15px;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
+
+        .doc-card .doc-meta {
+            font-size: 10px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .doc-content {
+            font-size: 13px;
+            line-height: 1.8;
+            color: #475569;
+            background: #fafbfd;
+            padding: 16px 20px;
+            border-radius: 6px;
+            border: 1px solid #f1f5f9;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: 'SF Mono', 'Consolas', 'Courier New', 'Noto Sans SC', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .redacted {
+            background: var(--redacted-bg);
+            color: var(--redacted-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+            position: relative;
+        }
+
+        .redacted:hover {
+            background: transparent;
+            color: var(--redacted-hover);
+            font-weight: bold;
+        }
+
+        .redacted::after {
+            content: '████';
+            color: #475569;
+            position: absolute;
+            left: 6px;
+            pointer-events: none;
+            font-weight: normal;
+        }
+
+        .redacted:hover::after {
+            content: none;
+        }
+
+        .highlight-num {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .highlight-hex {
+            color: #7c3aed;
+            font-weight: 600;
+        }
+
+        .comment-inline {
+            color: #16a34a;
+            font-style: italic;
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 14px;
+            background: #eff6ff;
+            color: #2563eb;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 11px;
+            border: 1px solid #bfdbfe;
+            transition: all 0.15s;
+        }
+
+        .download-link:hover {
+            background: #dbeafe;
+            border-color: #93c5fd;
+        }
+
+        .diff-view {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .diff-col {
+            flex: 1;
+            min-width: 200px;
+            background: #fefce8;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 11px;
+        }
+
+        .diff-col h5 {
+            font-size: 10px;
+            color: #a16207;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        .diff-col code {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 10px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e293b;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            .doc-card {
+                padding: 16px 14px;
+            }
+            .doc-content {
+                font-size: 11px;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo">
+            <span class="icon">📄</span> TechDoc Share
+        </div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="group-chat.html">群聊</a>
+            <a href="archive.html">档案馆</a>
+            <a href="blog.html">博客</a>
+            <a href="recruit.html">招聘</a>
+            <a href="manual.html">手册</a>
+            <a href="ftp.html">FTP</a>
+            <a href="mailbox.html">邮箱</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 文档1：十六进制解码结果 -->
+        <div class="doc-card">
+            <div class="doc-header">
+                <span class="doc-id">DOC-ECHO-001</span>
+                <span style="font-size:10px;color:var(--muted);">更新于 2026-04-28</span>
+            </div>
+            <h3>📡 信号塔IQ数据初步解调结果</h3>
+            <div class="doc-meta">作者：freq_watcher | 协作编辑 | 版本 v0.3</div>
+            <div class="doc-content">
+                <span class="comment-inline"># 从1420mhz_iq_20260428.bin解调得到的部分数据</span>
+                <span class="comment-inline"># 调制方式疑似BPSK，符号速率待确认</span>
+                <span class="comment-inline"># 以下为解调后的十六进制序列（片段）</span>
+
+                49 66 20 79 6F 75 20 73 65 65 20 74 68 69 73
+                2C 20 72 65 70 6C 79 20 <span class="highlight-hex">22 45 43 48 4F 22</span>
+
+                <span class="comment-inline"># 转换为ASCII后得到一段英文文本</span>
+                <span class="comment-inline"># 完整序列长度约256字节，此处仅展示前两行</span>
+                <span class="comment-inline"># 全部数据已上传至FTP服务器</span>
+            </div>
+            <a href="ftp.html" class="download-link">📁 下载完整IQ数据</a>
+        </div>
+
+        <!-- 文档2：手册扫描件（含涂黑内容） -->
+        <div class="doc-card">
+            <div class="doc-header">
+                <span class="doc-id">DOC-ECHO-002</span>
+                <span style="font-size:10px;color:var(--muted);">更新于 2026-04-27</span>
+            </div>
+            <h3>📖 SX-720维护手册第48页扫描件（含手写笔记）</h3>
+            <div class="doc-meta">来源：陈工-SIEMENS | 扫描自档案馆 DOC-1998-0723</div>
+            <div class="doc-content">
+                <span class="comment-inline"># 扫描件OCR识别结果（部分页面）</span>
+                <span class="comment-inline"># 手写笔记以【】标注</span>
+
+                设备型号：SX-720/<span class="highlight-hex">ECHO</span>
+                出厂编号：<span class="redacted">ECHO-1998-0451</span>
+                额定功率：7.5kW
+
+                【手写笔记1】
+                十六进制记录：
+                7E 4C 69 6E 6B 5F 62 72 6F 6B 65 6E 7E
+                【旁边画有波形线 ~ 符号】
+
+                【手写笔记2】
+                周期序列：
+                <span class="highlight-num">127</span>s, <span class="highlight-num">255</span>s, <span class="highlight-num">511</span>s, <span class="highlight-num">1023</span>s
+                全部是 <span class="redacted">2^n - 1</span> 形式
+
+                【手写笔记3 - 页面底部】
+                参数4950数值：<span class="highlight-hex">0x7A34</span>
+                十进制：<span class="redacted">31284</span>
+                用途：<span class="redacted">调试模式解锁密钥</span>
+            </div>
+            <p style="font-size:10px;color:var(--muted);margin-top:8px;">
+                💡 提示：被涂黑（██）的内容可鼠标悬停查看。部分内容可能需要查看页面源代码。
+            </p>
+        </div>
+
+        <!-- 文档3：二进制序列 -->
+        <div class="doc-card">
+            <div class="doc-header">
+                <span class="doc-id">DOC-ECHO-003</span>
+                <span style="font-size:10px;color:var(--muted);">更新于 2026-04-26</span>
+            </div>
+            <h3>🔢 机床振动波形转换后的二进制序列</h3>
+            <div class="doc-meta">来源：vibration_lab | 从视频逐帧提取</div>
+            <div class="doc-content">
+                <span class="comment-inline"># 从运转录像中提取的二进制数据</span>
+                <span class="comment-inline"># 振动幅度 > 0.04mm 标记为1，否则为0</span>
+                <span class="comment-inline"># 采样间隔1秒，共采集512个数据点</span>
+
+                01000101 01000011 01001000 01001111
+                01011111 01001111 01001110 00000000
+                00000000 00000000 ...
+
+                <span class="comment-inline"># 前7个字节转换为ASCII后是一个短语</span>
+                <span class="comment-inline"># 第8字节起全为零，可能是填充或终止符</span>
+                <span class="comment-inline"># 完整二进制文件见FTP服务器</span>
+            </div>
+            <a href="ftp.html" class="download-link">📁 下载完整二进制文件</a>
+        </div>
+
+        <!-- 文档4：对比版本 -->
+        <div class="doc-card">
+            <div class="doc-header">
+                <span class="doc-id">DOC-ECHO-004</span>
+                <span style="font-size:10px;color:var(--muted);">更新于 2026-04-25</span>
+            </div>
+            <h3>📋 回声计划论文删节对比（完整版 vs 公开版）</h3>
+            <div class="doc-meta">来源：archive_seeker | 完整版来自邮件附件</div>
+            <div class="diff-view">
+                <div class="diff-col">
+                    <h5>📄 公开版（论文数据库）</h5>
+                    <code>
+                        本系统采用████████编码方式，
+                        在████个节点之间进行████通信。
+                        信号调制频率为████GHz，
+                        采用████扩频技术。
+                    </code>
+                </div>
+                <div class="diff-col">
+                    <h5>📄 完整版（邮件附件）</h5>
+                    <code>
+                        本系统采用<span style="color:#2563eb;">BPSK</span>编码方式，
+                        在<span style="color:#2563eb;">5</span>个节点之间进行<span style="color:#2563eb;">中继</span>通信。
+                        信号调制频率为<span style="color:#2563eb;">1.42</span>GHz，
+                        采用<span style="color:#2563eb;">M序列</span>扩频技术。
+                    </code>
+                </div>
+            </div>
+            <p style="font-size:10px;color:var(--muted);margin-top:8px;">
+                📬 完整版论文附件存放于 <a href="mailbox.html">内部邮箱</a> 的归档邮件中。
+            </p>
+        </div>
+
+        <!-- 跨平台导航 -->
+        <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 18px; margin-top:16px;">
+            <p style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;">🔗 关联资源</p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <a href="archive.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">📚 档案馆原件</a>
+                <a href="ftp.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">📁 FTP下载</a>
+                <a href="mailbox.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">📬 邮件附件</a>
+                <a href="blog.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">📝 博客分析</a>
+                <a href="manual.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">📖 说明书</a>
+                <a href="git.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">💻 代码</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer class="footer">
+        <p>© 2026 TechDoc Share | 技术文档在线协作平台</p>
+        <p style="margin-top:4px;">
+            <a href="forum.html">论坛</a> ·
+            <a href="archive.html">档案馆</a> ·
+            <a href="ftp.html">FTP</a> ·
+            <a href="mailbox.html">邮箱</a> ·
+            <a href="manual.html">手册</a> ·
+            <a href="blog.html">博客</a> ·
+            <a href="git.html">代码</a>
+        </p>
+    </footer>
+
+    <script>
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // 双击涂黑区域可查看源代码中的原始内容
+        document.querySelectorAll('.redacted').forEach(el => {
+            el.addEventListener('dblclick', function() {
+                const rawText = this.textContent;
+                showToast('🔍 隐藏内容：' + rawText);
+            });
+        });
+
+        console.log('技术文档共享平台已加载。');
+        console.log('提示：被涂黑的文字（redacted）可以鼠标悬停查看，或双击显示。');
+        console.log('提示：部分隐藏内容在页面源代码中也可以找到。');
+        console.log('关键数据：DOC-ECHO-002 中参数4950十进制值被涂黑 = 31284');
+    </script>
+</body>
+</html>

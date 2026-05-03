@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工控回声社区 - 自动化技术论坛</title>
+    <style>
+        :root {
+            --bg: #eef2f7;
+            --card: #ffffff;
+            --nav-bg: #1a2533;
+            --primary: #2c5f8a;
+            --accent: #e8734a;
+            --text: #333333;
+            --muted: #8a8f99;
+            --border: #dce1e8;
+            --link: #1a73e8;
+            --success: #4caf84;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ========== 顶部导航栏 ========== */
+        .top-nav {
+            background: var(--nav-bg);
+            color: #ffffff;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .logo .dot {
+            color: var(--accent);
+            font-size: 26px;
+            vertical-align: middle;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-links a {
+            color: #b0bec5;
+            text-decoration: none;
+            font-size: 11px;
+            padding: 5px 9px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-links a.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12);
+            font-weight: 600;
+        }
+
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown-btn {
+            color: #b0bec5;
+            font-size: 11px;
+            padding: 5px 9px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            background: none;
+            border: none;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .nav-dropdown-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #1e2d3d;
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 150px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            z-index: 150;
+        }
+
+        .nav-dropdown-content a {
+            display: block;
+            padding: 8px 16px;
+            font-size: 11px;
+            color: #b0bec5;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .nav-dropdown-content a:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+
+        .nav-dropdown:hover .nav-dropdown-content {
+            display: block;
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            white-space: nowrap;
+        }
+
+        .notification-bell {
+            position: relative;
+            font-size: 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .notif-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 7px;
+            height: 7px;
+            background: #ff4757;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.35;
+                transform: scale(1.4);
+            }
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        /* ========== 主布局 ========== */
+        .main-layout {
+            max-width: 1340px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 220px 1fr 260px;
+            gap: 18px;
+        }
+
+        /* ========== 左侧边栏 ========== */
+        .sidebar-left {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 16px;
+            height: fit-content;
+            position: sticky;
+            top: 76px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-left h3 {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+            font-weight: 700;
+        }
+
+        .cat-item {
+            padding: 9px 10px;
+            margin: 2px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.15s;
+            color: #555;
+        }
+
+        .cat-item:hover {
+            background: #f0f4f9;
+            color: var(--primary);
+        }
+
+        .cat-item .count {
+            background: #e8ecf1;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        /* 外部平台入口区块 */
+        .platform-links-box {
+            margin-top: 18px;
+            padding: 14px;
+            background: #fafbfd;
+            border-radius: 8px;
+            border: 1px dashed var(--border);
+        }
+
+        .platform-links-box h4 {
+            font-size: 10px;
+            color: var(--muted);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .pl-link {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 9px;
+            font-size: 11px;
+            color: var(--link);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+
+        .pl-link:hover {
+            background: #e8f0fe;
+            text-decoration: underline;
+        }
+
+        .pl-link .icon {
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        /* ========== 中间内容区 ========== */
+        .toolbar {
+            background: var(--card);
+            padding: 12px 16px;
+            border-radius: 10px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .toolbar .btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.15s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .toolbar .btn:hover {
+            background: #f5f7fa;
+        }
+
+        .toolbar .btn.primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .toolbar .btn.primary:hover {
+            background: #d4653d;
+        }
+
+        .search-inline {
+            margin-left: auto;
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: 190px;
+            font-size: 12px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .search-inline:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* 帖子卡片 */
+        .post-card {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+            position: relative;
+        }
+
+        .post-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-card.pinned {
+            border-left-color: var(--accent);
+        }
+
+        .pin-badge {
+            background: #ffe8e0;
+            color: var(--accent);
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 3px;
+            margin-right: 5px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .post-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .post-excerpt {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .post-meta {
+            font-size: 10px;
+            color: var(--muted);
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #eef3f8;
+            color: #5a6b7c;
+            padding: 2px 9px;
+            border-radius: 11px;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .tag.warn {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .tag.hot {
+            background: #ffe8e0;
+            color: var(--accent);
+        }
+
+        /* 跨平台引用标记 */
+        .cross-ref {
+            display: inline-block;
+            background: #e8f0fe;
+            color: var(--link);
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-left: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            border: 1px solid #d0e2ff;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+
+        .cross-ref:hover {
+            background: #d0e2ff;
+            text-decoration: underline;
+        }
+
+        /* 分页 */
+        .pagination {
+            text-align: center;
+            padding: 16px 0;
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .pagination .btn {
+            min-width: 34px;
+            text-align: center;
+        }
+
+        .pagination .btn.active-page {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        /* ========== 右侧边栏 ========== */
+        .sidebar-right {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 16px;
+            height: fit-content;
+            position: sticky;
+            top: 76px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-right h3 {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 12px;
+        }
+
+        .hot-tag {
+            display: inline-block;
+            padding: 4px 9px;
+            margin: 3px 2px;
+            background: #f0f4f9;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+
+        .hot-tag:hover {
+            background: #e0e8f2;
+            border-color: var(--border);
+        }
+
+        .dm-preview {
+            margin-top: 14px;
+            padding: 12px;
+            background: #fff9f5;
+            border-radius: 8px;
+            font-size: 11px;
+            border: 1px solid #ffe0cc;
+        }
+
+        .dm-preview strong {
+            color: var(--accent);
+        }
+
+        /* ========== 帖子详情弹窗 ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 740px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 28px;
+            animation: modalSlideUp 0.25s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal h2 {
+            margin-bottom: 6px;
+            font-size: 18px;
+            color: #1a1a1a;
+        }
+
+        .modal .meta-info {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+
+        .post-body {
+            line-height: 1.8;
+            margin: 16px 0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .post-body code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .post-body a {
+            color: var(--link);
+        }
+
+        .reply-item {
+            background: #f8f9fc;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .reply-item .author {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .reply-box {
+            margin-top: 16px;
+        }
+
+        .reply-box textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+            transition: border-color 0.2s;
+        }
+
+        .reply-box textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .reply-box button {
+            margin-top: 6px;
+            padding: 7px 18px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+
+        .reply-box button:hover {
+            background: #244d6e;
+        }
+
+        .modal-close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .modal-close-btn:hover {
+            color: #333;
+        }
+
+        /* ========== Toast ========== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--nav-bg);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ========== 页脚 ========== */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 1100px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar-left,
+            .sidebar-right {
+                position: static;
+            }
+            .nav-links {
+                display: none;
+            }
+            .top-nav {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 顶部导航 ==================== -->
+    <nav class="top-nav">
+        <div class="logo">ECHO<span class="dot">·</span>回声</div>
+
+        <div class="nav-links">
+            <a href="forum.html" class="active">📋 论坛</a>
+            <a href="group-chat.html">💬 群聊</a>
+            <a href="archive.html">📚 档案馆</a>
+            <a href="blog.html">📝 博客</a>
+            <a href="recruit.html">💼 招聘</a>
+            <a href="doc-share.html">📄 文档</a>
+            <a href="mailbox.html">📬 邮箱</a>
+            <a href="news.html">📰 新闻</a>
+            <a href="video.html">🎥 视频</a>
+            <a href="paper.html">📑 论文</a>
+
+            <span class="nav-dropdown">
+                <button class="nav-dropdown-btn">更多 ▾</button>
+                <div class="nav-dropdown-content">
+                    <a href="map.html">🗺 地理信息</a>
+                    <a href="manual.html">📖 产品手册</a>
+                    <a href="ftp.html">📁 FTP服务器</a>
+                    <a href="tieba.html">💬 贴吧</a>
+                    <a href="qa.html">❓ 问答平台</a>
+                    <a href="git.html">💻 代码仓库</a>
+                    <a href="shop.html">🛒 二手交易</a>
+                    <a href="memo.html">📋 备忘录</a>
+                    <a href="weather.html">🌡 环境监测</a>
+                    <a href="terminal.html">🖥 远程终端</a>
+                </div>
+            </span>
+        </div>
+
+        <div class="user-area">
+            <div class="notification-bell" title="3条新消息">🔔<span class="notif-dot"></span></div>
+            <span style="font-size:11px;color:#b0bec5;">Guest_4721</span>
+            <div class="user-avatar" title="访客账户">G</div>
+        </div>
+    </nav>
+
+    <!-- ==================== 主布局 ==================== -->
+    <div class="main-layout">
+
+        <!-- 左侧边栏 -->
+        <aside class="sidebar-left">
+            <h3>📂 论坛频道</h3>
+            <div class="cat-item">📋 全部帖子 <span class="count">58,231</span></div>
+            <div class="cat-item">🔌 信号处理 <span class="count">12,483</span></div>
+            <div class="cat-item">⚙️ 自动化控制 <span class="count">9,821</span></div>
+            <div class="cat-item">🔧 设备维护 <span class="count">15,337</span></div>
+            <div class="cat-item">📜 老设备专区 <span class="count">3,942</span></div>
+            <div class="cat-item">📋 项目协作 <span class="count">6,648</span></div>
+
+            <!-- 外部平台跳转 -->
+            <div class="platform-links-box">
+                <h4>🔗 关联平台</h4>
+                <a href="manual.html" class="pl-link">
+                    <span class="icon">📖</span> 设备说明书库
+                </a>
+                <a href="ftp.html" class="pl-link">
+                    <span class="icon">📁</span> 老旧FTP服务器
+                </a>
+                <a href="map.html" class="pl-link">
+                    <span class="icon">🗺</span> 工业设施地图
+                </a>
+                <a href="weather.html" class="pl-link">
+                    <span class="icon">🌡</span> 环境监测站
+                </a>
+                <a href="terminal.html" class="pl-link">
+                    <span class="icon">🖥</span> 远程维护终端
+                </a>
+                <a href="mailbox.html" class="pl-link">
+                    <span class="icon">📬</span> 内部邮箱系统
+                </a>
+            </div>
+        </aside>
+
+        <!-- 中间帖子列表 -->
+        <main>
+            <!-- 工具栏 -->
+            <div class="toolbar">
+                <button class="btn primary" onclick="openNewPost()">✏️ 发布新帖</button>
+                <button class="btn">🔥 热门</button>
+                <button class="btn">🆕 最新</button>
+                <button class="btn">📌 精华</button>
+                <input type="text" class="search-inline" placeholder="🔍 搜索帖子..." id="searchInput">
+            </div>
+
+            <!-- 帖子1 - 置顶 -->
+            <div class="post-card pinned" onclick="openPost('p1')">
+                <span class="pin-badge">📌 置顶</span>
+                <span class="tag">信号分析</span>
+                <span class="tag warn">未解决</span>
+                <span class="tag hot">热门</span>
+                <div class="post-title">
+                    废弃通信塔持续发送1.42GHz异常脉冲信号
+                </div>
+                <div class="post-excerpt">
+                    使用RTL-SDR捕获到规律脉冲，间隔约120-130秒。IQ采样数据已上传，需要精确计算脉冲周期...
+                </div>
+                <div class="post-meta">
+                    <span>👤 freq_watcher</span>
+                    <span>📅 2026-04-28</span>
+                    <span>💬 47</span>
+                    <span>👁 3,842</span>
+                    <a href="ftp.html" class="cross-ref" onclick="event.stopPropagation();">📁 IQ数据</a>
+                    <a href="doc-share.html" class="cross-ref" onclick="event.stopPropagation();">📄 解码结果</a>
+                </div>
+            </div>
+
+            <!-- 帖子2 -->
+            <div class="post-card" onclick="openPost('p2')">
+                <span class="tag">老设备</span>
+                <span class="tag warn">求助</span>
+                <div class="post-title">
+                    FANUC 16i系统参数4950-4952区域数值异常，求对照
+                </div>
+                <div class="post-excerpt">
+                    参数4950=0x7A34，参数4951=0x4C4F，参数4952=0x434B。这几个值不在官方手册中，是否有第三方文档记录？
+                </div>
+                <div class="post-meta">
+                    <span>👤 retro_engineer</span>
+                    <span>📅 2026-04-27</span>
+                    <span>💬 23</span>
+                    <span>👁 1,856</span>
+                    <a href="manual.html" class="cross-ref" onclick="event.stopPropagation();">📖 查说明书</a>
+                    <a href="archive.html" class="cross-ref" onclick="event.stopPropagation();">📚 查档案</a>
+                </div>
+            </div>
+
+            <!-- 帖子3 -->
+            <div class="post-card" onclick="openPost('p3')">
+                <span class="tag">变频器</span>
+                <span class="tag">故障分析</span>
+                <div class="post-title">
+                    SX-720型变频器出现周期性频率偏移，DIP开关配置求教
+                </div>
+                <div class="post-excerpt">
+                    偏移量与设备内部DIP开关位模式似乎有关联，但手头无该型号的完整规格书。设备铭牌照片已发在二手交易区...
+                </div>
+                <div class="post-meta">
+                    <span>👤 machinist_Li</span>
+                    <span>📅 2026-04-26</span>
+                    <span>💬 31</span>
+                    <span>👁 2,103</span>
+                    <a href="shop.html" class="cross-ref" onclick="event.stopPropagation();">📷 设备铭牌</a>
+                    <a href="manual.html" class="cross-ref" onclick="event.stopPropagation();">📖 规格书</a>
+                </div>
+            </div>
+
+            <!-- 帖子4 -->
+            <div class="post-card" onclick="openPost('p4')">
+                <span class="tag">项目协作</span>
+                <span class="tag">招募</span>
+                <div class="post-title">
+                    【招募】旧通信系统逆向工程，需FPGA与射频信号分析经验
+                </div>
+                <div class="post-excerpt">
+                    项目涉及扩频码还原与老旧通信协议逆向。有意者请在招聘页面提交申请并通过技能验证...
+                </div>
+                <div class="post-meta">
+                    <span>👤 project_zeta</span>
+                    <span>📅 2026-04-25</span>
+                    <span>💬 56</span>
+                    <span>👁 5,120</span>
+                    <a href="recruit.html" class="cross-ref" onclick="event.stopPropagation();">💼 招聘详情</a>
+                    <a href="git.html" class="cross-ref" onclick="event.stopPropagation();">💻 开源代码</a>
+                </div>
+            </div>
+
+            <!-- 帖子5 -->
+            <div class="post-card" onclick="openPost('p5')">
+                <span class="tag">维护日志</span>
+                <span class="tag">振动分析</span>
+                <div class="post-title">
+                    数控磨床主轴振动频谱出现极低频分量，求同型号对比数据
+                </div>
+                <div class="post-excerpt">
+                    频谱中约0.0078Hz处有尖峰。运转录像已上传视频平台，请注意查看振动模式的规律性变化...
+                </div>
+                <div class="post-meta">
+                    <span>👤 vibration_lab</span>
+                    <span>📅 2026-04-24</span>
+                    <span>💬 18</span>
+                    <span>👁 1,432</span>
+                    <a href="video.html" class="cross-ref" onclick="event.stopPropagation();">🎥 运转录像</a>
+                    <a href="weather.html" class="cross-ref" onclick="event.stopPropagation();">🌡 环境数据</a>
+                </div>
+            </div>
+
+            <!-- 帖子6 -->
+            <div class="post-card" onclick="openPost('p6')">
+                <span class="tag">资料求助</span>
+                <span class="tag">文献</span>
+                <div class="post-title">
+                    寻找1998年"回声计划"完整论文，数据库仅有删节版
+                </div>
+                <div class="post-excerpt">
+                    在论文数据库搜索到一篇相关文献，但关键段落被删节。是否有同行保存了完整版本？
+                </div>
+                <div class="post-meta">
+                    <span>👤 archive_seeker</span>
+                    <span>📅 2026-04-23</span>
+                    <span>💬 12</span>
+                    <span>👁 987</span>
+                    <a href="paper.html" class="cross-ref" onclick="event.stopPropagation();">📑 论文库</a>
+                    <a href="mailbox.html" class="cross-ref" onclick="event.stopPropagation();">📬 邮件往来</a>
+                </div>
+            </div>
+
+            <!-- 帖子7 -->
+            <div class="post-card" onclick="openPost('p7')">
+                <span class="tag">信号处理</span>
+                <span class="tag">讨论</span>
+                <div class="post-title">
+                    扩频通信中M序列周期为何常用2^n-1？数学原理探讨
+                </div>
+                <div class="post-excerpt">
+                    线性反馈移位寄存器的最大周期由本原多项式决定。常见的127、255、511等周期值在实际应用中的选取依据是什么？
+                </div>
+                <div class="post-meta">
+                    <span>👤 dsp_enthusiast</span>
+                    <span>📅 2026-04-22</span>
+                    <span>💬 41</span>
+                    <span>👁 2,876</span>
+                    <a href="qa.html" class="cross-ref" onclick="event.stopPropagation();">❓ 问答讨论</a>
+                    <a href="paper.html" class="cross-ref" onclick="event.stopPropagation();">📑 参考文献</a>
+                </div>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination">
+                <button class="btn">‹ 上一页</button>
+                <button class="btn active-page">1</button>
+                <button class="btn">2</button>
+                <button class="btn">3</button>
+                <button class="btn">4</button>
+                <button class="btn">5</button>
+                <button class="btn">下一页 ›</button>
+            </div>
+        </main>
+
+        <!-- 右侧边栏 -->
+        <aside class="sidebar-right">
+            <h3>📊 社区动态</h3>
+            <div class="stat-row"><span>在线会员</span><strong>247</strong></div>
+            <div class="stat-row"><span>今日发帖</span><strong>1,203</strong></div>
+            <div class="stat-row"><span>总主题数</span><strong>58,231</strong></div>
+            <div class="stat-row"><span>总回复数</span><strong>892,447</strong></div>
+
+            <h3 style="margin-top: 18px;">🏷 热门标签</h3>
+            <span class="hot-tag" onclick="location.href='manual.html'" title="查看说明书">参数4950</span>
+            <span class="hot-tag" onclick="location.href='ftp.html'" title="下载固件">IQ数据</span>
+            <span class="hot-tag" onclick="location.href='map.html'" title="查看地图">坐标节点</span>
+            <span class="hot-tag" onclick="location.href='video.html'" title="查看录像">频谱分析</span>
+            <span class="hot-tag" onclick="location.href='weather.html'" title="环境数据">127秒周期</span>
+            <span class="hot-tag" onclick="location.href='terminal.html'" title="终端登录">SSH维护</span>
+
+            <div class="dm-preview">
+                <strong>📬 私信提醒</strong><br>
+                project_zeta 发来项目邀请<br>
+                freq_watcher 回复了你的评论<br>
+                <span style="color:var(--link); cursor:pointer; font-size:10px;" onclick="location.href='mailbox.html'">查看全部消息 →</span>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ==================== 帖子详情弹窗 ==================== -->
+    <div class="modal-overlay" id="postModal">
+        <div class="modal" id="postModalContent"></div>
+    </div>
+
+    <!-- ==================== Toast 消息 ==================== -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ==================== 页脚 ==================== -->
+    <div class="footer">
+        <p>© 2019-2026 工控回声社区 ECHO Forum v3.2.1 | 工业自动化技术交流平台</p>
+        <p style="margin-top:4px;">
+            <a href="forum.html">论坛</a> ·
+            <a href="group-chat.html">群聊</a> ·
+            <a href="archive.html">档案馆</a> ·
+            <a href="blog.html">博客</a> ·
+            <a href="recruit.html">招聘</a> ·
+            <a href="doc-share.html">文档</a> ·
+            <a href="mailbox.html">邮箱</a> ·
+            <a href="news.html">新闻</a> ·
+            <a href="video.html">视频</a> ·
+            <a href="paper.html">论文</a> ·
+            <a href="map.html">地图</a> ·
+            <a href="manual.html">手册</a> ·
+            <a href="ftp.html">FTP</a> ·
+            <a href="tieba.html">贴吧</a> ·
+            <a href="qa.html">问答</a> ·
+            <a href="git.html">代码</a> ·
+            <a href="shop.html">二手</a> ·
+            <a href="memo.html">备忘</a> ·
+            <a href="weather.html">环境</a> ·
+            <a href="terminal.html">终端</a>
+        </p>
+    </div>
+
+    <script>
+        // ============ 帖子数据库 ============
+        const posts = {
+            'p1': {
+                title: '废弃通信塔持续发送1.42GHz异常脉冲信号',
+                author: 'freq_watcher',
+                date: '2026-04-28 14:32',
+                category: '信号处理',
+                body: `
+                    <p>使用RTL-SDR配合LNA在<strong>1.42GHz</strong>频段捕获到规律性脉冲信号。
+                    该频率恰好是氢原子谱线频率，通常用于射电天文观测。</p>
+                    <p>脉冲间隔大约在<strong>120到130秒之间</strong>，但精确周期需要根据采样率自行计算。</p>
+                    <p>IQ采样数据文件已上传至 <a href="ftp.html">FTP服务器</a>，
+                    文件名：<code>1420mhz_iq_20260428.bin</code>（约850MB，采样率2MS/s，时长约30分钟）。</p>
+                    <p>初步解调得到的十六进制数据存放在 <a href="doc-share.html">在线文档平台</a>，
+                    文档编号 <code>DOC-ECHO-001</code>。</p>
+                    <p><em>注意：精确的脉冲周期需要查看IQ文件的时间戳间隔来计算，我尚未完成这一步。</em></p>
+                    <p>如果有人计算出了精确周期，请在本帖回复。</p>
+                `,
+                replies: [
+                    { author: 'rf_geek', text: '1.42GHz这个频率选择太刻意了。你录了多久的IQ？采样率多少？周期自己算一下时间戳间隔就行，不难。' },
+                    { author: 'dsp_enthusiast', text: '如果脉冲间隔是127秒（2^7-1），那基本可以确定是M序列扩频信号。建议查一下扩频码长度。' },
+                    { author: 'freq_watcher', text: '采样率2MS/s，文件时长约30分钟。我还没仔细算周期，最近太忙了。数据都在FTP上，有兴趣的自己下载分析。' },
+                    { author: 'project_zeta', text: '这个信号的特征与1998年的某个项目高度吻合。如果你分析出周期数值，请去招聘页提交。' },
+                ]
+            },
+            'p2': {
+                title: 'FANUC 16i系统参数4950-4952区域数值异常，求对照',
+                author: 'retro_engineer',
+                date: '2026-04-27 09:15',
+                category: '老设备专区',
+                body: `
+                    <p>在清理一台1998年出厂的FANUC 16i数控系统时，发现参数表4950-4952区域有三个非标数值：</p>
+                    <p><code>参数4950: 0x7A34</code><br>
+                    <code>参数4951: 0x4C4F</code><br>
+                    <code>参数4952: 0x434B</code></p>
+                    <p>这几个参数在FANUC官方手册中标注为"预留"，但数值明显是被人为写入的。</p>
+                    <p>查阅 <a href="manual.html">第三方设备说明书</a> 可能有相关附录信息。</p>
+                    <p>另外，<a href="archive.html">工业档案馆</a> 可能有该年份的纸质参数记录卡。</p>
+                    <p>如果有人知道这些数值的含义，请回复。</p>
+                `,
+                replies: [
+                    { author: 'cnc_expert', text: '这三个字节如果按ASCII解释会是什么？十六进制转字符是很基础的操作。' },
+                    { author: 'retro_engineer', text: 'ASCII表我当然查过。但这三个值放在一起是否有特殊含义，还需要结合设备上下文。' },
+                    { author: 'old_tech', text: '1998年那批设备经常在预留参数区写入项目代号。建议查一下同年份的其他文档。' },
+                ]
+            },
+            'p3': {
+                title: 'SX-720型变频器出现周期性频率偏移，DIP开关配置求教',
+                author: 'machinist_Li',
+                date: '2026-04-26 16:48',
+                category: '自动化控制',
+                body: `
+                    <p>SX-720型变频器（1998年款）出现输出频率周期性偏移，范围约47.3-52.7Hz。</p>
+                    <p>已排除电源波动、负载变化、IGBT老化等常规故障。</p>
+                    <p>怀疑与设备内部DIP开关配置有关。设备铭牌照片已发在 <a href="shop.html">二手交易区</a>，
+                    请查看铭牌上的完整型号信息。</p>
+                    <p>该型号的完整规格书需要在 <a href="manual.html">设备说明书库</a> 中查找。</p>
+                `,
+                replies: [
+                    { author: 'drive_specialist', text: 'SX-720的DIP开关有8位，不同的位组合对应不同的运行模式。需要先确认你的设备完整型号。' },
+                    { author: 'machinist_Li', text: '铭牌照片在二手交易帖里。型号是SX-720/ECHO，这个/ECHO后缀我没见过。' },
+                ]
+            },
+            'p4': {
+                title: '【招募】旧通信系统逆向工程，需FPGA与射频信号分析经验',
+                author: 'project_zeta',
+                date: '2026-04-25 11:00',
+                category: '项目协作',
+                body: `
+                    <p>我们正在寻找志愿者参与一个历史通信系统的逆向分析项目。</p>
+                    <p><strong>项目背景：</strong>涉及1998年前后部署的一套扩频通信系统，
+                    近期在多个地点检测到该系统仍在发出维护信标信号。</p>
+                    <p><strong>需要的技能：</strong>FPGA开发、射频信号分析、扩频码还原、老旧通信协议逆向。</p>
+                    <p>有意者请访问 <a href="recruit.html">招聘页面</a> 提交申请，并通过技能验证。</p>
+                    <p>项目相关的开源代码托管在 <a href="git.html">代码仓库</a>。</p>
+                `,
+                replies: [
+                    { author: 'rf_geek', text: '已提交申请。验证问题不算难，但需要认真计算。' },
+                    { author: 'project_zeta', text: '收到几份申请。通过验证的候选人会收到邮件通知。' },
+                ]
+            },
+            'p5': {
+                title: '数控磨床主轴振动频谱出现极低频分量，求同型号对比数据',
+                author: 'vibration_lab',
+                date: '2026-04-24 08:22',
+                category: '设备维护',
+                body: `
+                    <p>对一台1998年出厂的数控磨床进行振动频谱分析时，
+                    在<strong>约0.0078Hz</strong>处发现异常尖峰。</p>
+                    <p>换算周期：1/0.0078 ≈ <strong>128.2秒</strong>（此值为近似计算，精确值需更多数据确认）。</p>
+                    <p>运转录像已上传至 <a href="video.html">视频平台</a>，
+                    请逐帧查看振动模式是否存在规律性变化。</p>
+                    <p>同时段的环境监测数据可查阅 <a href="weather.html">环境监测站</a> 记录。</p>
+                `,
+                replies: [
+                    { author: 'mech_engineer', text: '0.0078Hz的振动不可能是纯机械来源。这频率太低了，更像是外部信号调制。' },
+                    { author: 'vibration_lab', text: '我也这么怀疑。环境监测站的数据或许能提供线索。' },
+                ]
+            },
+            'p6': {
+                title: '寻找1998年"回声计划"完整论文，数据库仅有删节版',
+                author: 'archive_seeker',
+                date: '2026-04-23 15:30',
+                category: '资料求助',
+                body: `
+                    <p>在 <a href="paper.html">工程期刊数据库</a> 中搜索关键词
+                    "ECHO project 1998 spread spectrum" 找到一篇论文，
+                    但摘要之后的内容被大面积删节。</p>
+                    <p>数据库显示该论文的完整版本曾作为附件在某邮件往来中传递。
+                    相关邮件记录可能在 <a href="mailbox.html">内部邮箱系统</a> 中存档。</p>
+                    <p>如果有人保存了完整版本，请分享。</p>
+                `,
+                replies: [
+                    { author: 'paper_chaser', text: '那篇论文我也有印象。关键段落被删得很干净，估计只有邮件附件里还有完整版。' },
+                    { author: 'archive_seeker', text: '我去邮箱系统里翻翻看。如果有人知道邮件归档的检索关键词也请告知。' },
+                ]
+            },
+            'p7': {
+                title: '扩频通信中M序列周期为何常用2^n-1？数学原理探讨',
+                author: 'dsp_enthusiast',
+                date: '2026-04-22 10:00',
+                category: '信号处理',
+                body: `
+                    <p>线性反馈移位寄存器（LFSR）产生的M序列最大周期为2^n-1，
+                    由本原多项式决定。</p>
+                    <p>常见的周期值：<strong>127（2^7-1）、255（2^8-1）、511（2^9-1）、1023（2^10-1）</strong>。</p>
+                    <p>在实际工程应用中，127秒这个周期值在1990年代的铁路通信系统中曾有使用案例。</p>
+                    <p>相关问题在 <a href="qa.html">问答平台</a> 上也有讨论。</p>
+                    <p>参考文献见 <a href="paper.html">论文数据库</a>。</p>
+                `,
+                replies: [
+                    { author: 'math_geek', text: '127=2^7-1，对应的本原多项式有多个可选。需要知道具体用的是哪个多项式才能还原序列。' },
+                    { author: 'dsp_enthusiast', text: '没错。而且如果周期确实是127秒，那么码片速率大约是多少？这需要从IQ数据中推算。' },
+                ]
+            },
+        };
+
+        // ============ 函数 ============
+        function openPost(id) {
+            const p = posts[id];
+            if (!p) return;
+
+            const repliesHTML = p.replies.map(r =>
+                `<div class="reply-item"><span class="author">${r.author}</span>：${r.text}</div>`
+            ).join('');
+
+            const modalHTML = `
+                <button class="modal-close-btn" onclick="closePostModal()">✕</button>
+                <span class="tag">${p.category}</span>
+                <h2>${p.title}</h2>
+                <div class="meta-info">作者：${p.author} | 发布于：${p.date}</div>
+                <div class="post-body">${p.body}</div>
+                <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
+                    <strong style="font-size:13px;">💬 回复（${p.replies.length}条）</strong>
+                </div>
+                ${repliesHTML}
+                <div class="reply-box">
+                    <textarea placeholder="输入你的回复..." id="replyInput_${id}"></textarea>
+                    <button onclick="submitReply('${id}')">发表回复</button>
+                </div>
+            `;
+
+            document.getElementById('postModalContent').innerHTML = modalHTML;
+            document.getElementById('postModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function submitReply(id) {
+            const input = document.getElementById('replyInput_' + id);
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) {
+                showToast('⚠️ 请输入回复内容');
+                return;
+            }
+
+            // NPC模糊回应，不直接给出答案
+            const p = posts[id];
+            p.replies.push({
+                author: 'Guest_4721',
+                text: text
+            });
+
+            // 根据不同帖子给出引导性回应
+            setTimeout(() => {
+                if (id === 'p1') {
+                    p.replies.push({
+                        author: 'freq_watcher',
+                        text: '感谢关注。周期需要从FTP上的IQ文件中自行计算。采样率2MS/s，数一下脉冲间采样点数即可。'
+                    });
+                } else if (id === 'p2') {
+                    p.replies.push({
+                        author: 'cnc_expert',
+                        text: 'ASCII编码是最基础的计算机知识。三个十六进制值分别转成字符，连起来看看是什么。'
+                    });
+                } else if (id === 'p4') {
+                    p.replies.push({
+                        author: 'project_zeta',
+                        text: '感兴趣的话请去招聘页提交申请。验证问题需要你自己计算。'
+                    });
+                } else {
+                    p.replies.push({
+                        author: 'moderator',
+                        text: '已收到你的回复。建议同时查看关联平台中的相关资料。'
+                    });
+                }
+
+                input.value = '';
+                openPost(id);
+                showToast('✅ 回复已发布');
+            }, 600 + Math.random() * 800);
+        }
+
+        function closePostModal() {
+            document.getElementById('postModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function openNewPost() {
+            showToast('✏️ 发帖功能已开放，你可以发布新的技术讨论');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // 点击遮罩关闭
+        document.getElementById('postModal').addEventListener('click', function(e) {
+            if (e.target === this) closePostModal();
+        });
+
+        // ESC关闭
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closePostModal();
+        });
+
+        // 搜索框交互
+        document.getElementById('searchInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                if (query) {
+                    showToast('🔍 搜索："' + query + '" —— 请在各关联平台中查找相关信息');
+                }
+            }
+        });
+
+        // 初始化
+        console.log('工控回声社区已加载。共有20个关联平台，线索分散在各处。');
+        console.log('提示：注意帖子中的蓝色链接，它们指向其他平台的关键信息。');
+    </script>
+</body>
+</html>

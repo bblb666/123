@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工业技术档案馆 - 文献查询系统</title>
+    <style>
+        :root {
+            --bg: #f5e6d3;
+            --card: #fefaf5;
+            --header-bg: #6b5b4a;
+            --text: #3e3028;
+            --muted: #8a7b6b;
+            --border: #d4c5b0;
+            --accent: #9b7b5c;
+            --link: #7b5b3a;
+            --highlight: #fffdf0;
+            --redacted: #1a1a1a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SimSun', 'STSong', 'Noto Serif SC', 'KaiTi', 'Microsoft YaHei', serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .archive-header {
+            background: var(--header-bg);
+            color: #f5e6d3;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .archive-header h1 {
+            font-size: 20px;
+            letter-spacing: 3px;
+            font-weight: normal;
+            white-space: nowrap;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .header-nav a {
+            color: #f5e6d3;
+            text-decoration: none;
+            font-size: 12px;
+            padding: 5px 10px;
+            border: 1px solid rgba(245, 230, 211, 0.3);
+            border-radius: 3px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .header-nav a:hover {
+            background: rgba(245, 230, 211, 0.1);
+            border-color: rgba(245, 230, 211, 0.6);
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 24px auto;
+            padding: 0 20px;
+        }
+
+        .search-panel {
+            background: var(--card);
+            padding: 20px 24px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .search-panel label {
+            font-size: 13px;
+            color: var(--muted);
+            white-space: nowrap;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .search-panel input {
+            flex: 1;
+            min-width: 200px;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            background: #fffefb;
+            border-radius: 3px;
+            transition: border-color 0.2s;
+        }
+
+        .search-panel input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(155, 123, 92, 0.1);
+        }
+
+        .search-panel select {
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            font-family: 'Microsoft YaHei', sans-serif;
+            font-size: 12px;
+            background: #fffefb;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .search-panel button {
+            padding: 9px 20px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-family: 'Microsoft YaHei', sans-serif;
+            font-size: 13px;
+            border-radius: 3px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .search-panel button:hover {
+            background: #7b5b3c;
+        }
+
+        .result-card {
+            background: var(--card);
+            padding: 18px 22px;
+            margin: 8px 0;
+            border-left: 4px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+
+        .result-card:hover {
+            border-left-color: var(--accent);
+            background: #fffefb;
+        }
+
+        .result-card .doc-id {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: bold;
+            letter-spacing: 1px;
+            font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+        }
+
+        .result-card h3 {
+            font-size: 15px;
+            margin: 6px 0;
+            font-weight: normal;
+        }
+
+        .result-card .meta {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .hidden-detail {
+            display: none;
+            margin-top: 12px;
+            padding: 14px 18px;
+            background: #fffdf5;
+            border: 1px dashed #c9a96e;
+            border-radius: 3px;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .hidden-detail.show {
+            display: block;
+        }
+
+        .hidden-detail code {
+            background: #f0e8db;
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .hidden-detail .redacted {
+            background: #1a1a1a;
+            color: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .hidden-detail .redacted:hover {
+            background: transparent;
+            color: #c0392b;
+        }
+
+        .verification-box {
+            margin-top: 12px;
+            padding: 12px;
+            background: #fef9f5;
+            border: 1px solid #e8d8c0;
+            border-radius: 3px;
+        }
+
+        .verification-box input {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            width: 140px;
+            font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        .verification-box button {
+            padding: 6px 14px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            border-radius: 2px;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .verification-box button:hover {
+            background: #7b5b3c;
+        }
+
+        .cross-ref-section {
+            margin-top: 20px;
+            padding: 14px 18px;
+            background: #faf8f3;
+            border: 1px solid #e0d5c0;
+            border-radius: 3px;
+        }
+
+        .cross-ref-section h4 {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .cross-ref-link {
+            display: inline-block;
+            margin: 3px 6px;
+            padding: 5px 12px;
+            background: #f0e8db;
+            color: var(--link);
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 11px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            transition: all 0.15s;
+        }
+
+        .cross-ref-link:hover {
+            background: #e8d8c0;
+            text-decoration: underline;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #3e3028;
+            color: #f5e6d3;
+            padding: 10px 18px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            font-family: 'Microsoft YaHei', sans-serif;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            .search-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-panel input {
+                min-width: auto;
+            }
+            .archive-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="archive-header">
+        <h1>📚 工业技术档案馆</h1>
+        <div class="header-nav">
+            <a href="forum.html">← 返回论坛</a>
+            <a href="group-chat.html">💬 交流群</a>
+            <a href="doc-share.html">📄 文档平台</a>
+            <a href="manual.html">📖 说明书库</a>
+            <a href="paper.html">📑 论文库</a>
+            <a href="mailbox.html">📬 邮箱</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 搜索面板 -->
+        <div class="search-panel">
+            <label>文献编号查询：</label>
+            <input type="text" id="docNumberInput" placeholder="输入编号，如 DOC-1998-0723">
+            <select id="docTypeSelect">
+                <option value="">全部类型</option>
+                <option>技术手册</option>
+                <option>维护日志</option>
+                <option>设计图纸</option>
+                <option>项目档案</option>
+            </select>
+            <button onclick="searchDocument()">🔍 查询</button>
+        </div>
+
+        <!-- 查询结果区域 -->
+        <div id="resultsArea">
+
+            <!-- 文献1 -->
+            <div class="result-card" onclick="toggleDetail('detail1')">
+                <div class="doc-id">DOC-1998-0451</div>
+                <h3>FANUC 16i 系统参数表（1998年修订版）</h3>
+                <div class="meta">归档日期：1998-06-12 | 分类：技术手册 | 页数：247</div>
+                <div class="hidden-detail" id="detail1">
+                    <p><strong>第4950-4952号参数区域（原厂标注为"预留"）：</strong></p>
+                    <p>参数4950：<code>0x7A34</code></p>
+                    <p>参数4951：<code>0x4C4F</code></p>
+                    <p>参数4952：<code>0x434B</code></p>
+                    <p style="color:#8b6b4b; font-size:12px;">📝 页面边缘有铅笔注释：<em>"这三个值组合起来看"</em></p>
+                    <p style="font-size:11px; color:var(--muted);">参考：<a href="manual.html">第三方说明书库</a>可能有附录解读</p>
+                </div>
+            </div>
+
+            <!-- 文献2 - 核心文献 -->
+            <div class="result-card" onclick="toggleDetail('detail2')">
+                <div class="doc-id">DOC-1998-0723</div>
+                <h3>SX-720型变频器维护记录（1998-2001）</h3>
+                <div class="meta">归档日期：2001-03-08 | 分类：维护日志 | 页数：86</div>
+                <div class="hidden-detail" id="detail2">
+                    <p><strong>手写笔记（第48页）：</strong></p>
+                    <p>记录了一串十六进制数值：</p>
+                    <p><code>7E 4C 69 6E 6B 5F 62 72 6F 6B 65 6E 7E</code></p>
+                    <p style="color:#8b6b4b; font-size:12px;">📝 旁边画有波浪线符号"~"，并标注：<em>"取反后即真相"</em></p>
+                    <p><strong>第52页 - 波形图：</strong></p>
+                    <p>手绘波形图标有周期标注：</p>
+                    <p><code>127s</code>、<code>255s</code>、<code>511s</code>、<code>1023s</code></p>
+                    <p style="color:#8b6b4b; font-size:12px;">📝 注释：<em>"全部是2^n - 1形式"</em></p>
+                    <p style="font-size:11px; color:var(--muted);">此文献在<a href="group-chat.html">群聊</a>中有过讨论</p>
+                </div>
+            </div>
+
+            <!-- 文献3 - 需验证 -->
+            <div class="result-card" onclick="toggleDetail('detail3')">
+                <div class="doc-id">DOC-1998-1102</div>
+                <h3>🔒 回声计划通信节点坐标清单（绝密）</h3>
+                <div class="meta">归档日期：1998-11-30 | 分类：项目档案 | 权限：需验证</div>
+                <div class="hidden-detail" id="detail3">
+                    <p style="color:#c0392b;"><strong>⚠ 此文献需要验证才能查看完整内容。</strong></p>
+                    <div class="verification-box">
+                        <p style="font-size:12px; margin-bottom:6px;">验证问题：<strong>参数4950的十六进制值0x7A34转换为十进制是多少？</strong></p>
+                        <input type="text" id="verifyCode" placeholder="输入十进制数值">
+                        <button onclick="verifyAccess()">验证</button>
+                        <p id="verifyResult" style="font-size:11px; margin-top:6px; color:#c0392b;"></p>
+                    </div>
+                    <div id="coordContent" style="display:none;">
+                        <p style="margin-top:12px;"><strong>📋 节点坐标清单：</strong></p>
+                        <table style="width:100%; font-size:12px; border-collapse:collapse; margin-top:6px;">
+                            <tr style="border-bottom:1px solid #e0d0b0;">
+                                <td style="padding:4px 8px;">节点 01</td>
+                                <td style="padding:4px 8px;"><code>30.2741°N</code></td>
+                                <td style="padding:4px 8px;"><code>120.1551°E</code></td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #e0d0b0;">
+                                <td style="padding:4px 8px;">节点 02</td>
+                                <td style="padding:4px 8px;"><code>30.2812°N</code></td>
+                                <td style="padding:4px 8px;"><code>120.1623°E</code></td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #e0d0b0;">
+                                <td style="padding:4px 8px;">节点 03</td>
+                                <td style="padding:4px 8px;"><code>30.2698°N</code></td>
+                                <td style="padding:4px 8px;"><code>120.1698°E</code></td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #e0d0b0;">
+                                <td style="padding:4px 8px;">节点 04</td>
+                                <td style="padding:4px 8px;"><code>30.2623°N</code></td>
+                                <td style="padding:4px 8px;"><code>120.1612°E</code></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px;">节点 05</td>
+                                <td style="padding:4px 8px;"><code>30.2655°N</code></td>
+                                <td style="padding:4px 8px;"><code>120.1489°E</code></td>
+                            </tr>
+                        </table>
+                        <p style="margin-top:10px; color:#8b6b4b; font-size:12px;">
+                            📝 备注：五个节点在地图上呈<span class="redacted" title="鼠标悬停查看">正五边形</span>排列。
+                            中心汇合点坐标需自行计算。
+                        </p>
+                        <p style="font-size:11px; color:var(--muted);">坐标可视化请查阅<a href="map.html">工业设施地图</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文献4 -->
+            <div class="result-card" onclick="toggleDetail('detail4')">
+                <div class="doc-id">DOC-1998-0891</div>
+                <h3>通信塔维护巡检记录（1998年12月）</h3>
+                <div class="meta">归档日期：1998-12-20 | 分类：维护日志 | 页数：34</div>
+                <div class="hidden-detail" id="detail4">
+                    <p><strong>巡检摘要：</strong></p>
+                    <p>五座通信塔均已完成安装。设备型号：<code>SX-720/ECHO</code>（定制版）。</p>
+                    <p>发射频率：<span class="redacted" title="鼠标悬停查看">1.42 GHz</span></p>
+                    <p>信号调制方式：<span class="redacted" title="鼠标悬停查看">BPSK扩频</span></p>
+                    <p>维护周期：每<span class="redacted" title="鼠标悬停查看">127</span>秒自动发送一次握手信号。</p>
+                    <p style="font-size:11px; color:var(--muted);">相关新闻存档见<a href="news.html">地方科技报</a></p>
+                </div>
+            </div>
+
+            <!-- 文献5 -->
+            <div class="result-card" onclick="toggleDetail('detail5')">
+                <div class="doc-id">DOC-1999-0037</div>
+                <h3>回声计划阶段性报告（删节版）</h3>
+                <div class="meta">归档日期：1999-01-15 | 分类：项目档案 | 页数：12（原52页）</div>
+                <div class="hidden-detail" id="detail5">
+                    <p style="color:#c0392b;"><strong>⚠ 此文献大部分内容已被删节。</strong></p>
+                    <p>仅存摘要：本报告记录了ECHO分布式通信网络的部署情况。系统采用
+                        <span class="redacted" title="鼠标悬停查看">工业设备</span>作为信号中继节点，
+                        利用现有<span class="redacted" title="鼠标悬停查看">数控机床</span>的
+                        <span class="redacted" title="鼠标悬停查看">变频器</span>作为载波发生器。</p>
+                    <p style="font-size:11px; color:var(--muted);">完整版可能在<a href="paper.html">论文数据库</a>或<a href="mailbox.html">邮件附件</a>中</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 跨平台导航 -->
+        <div class="cross-ref-section">
+            <h4>🔗 关联平台快捷入口</h4>
+            <a href="forum.html" class="cross-ref-link">📋 技术论坛</a>
+            <a href="group-chat.html" class="cross-ref-link">💬 设备维护群</a>
+            <a href="doc-share.html" class="cross-ref-link">📄 文档共享</a>
+            <a href="manual.html" class="cross-ref-link">📖 说明书库</a>
+            <a href="map.html" class="cross-ref-link">🗺 设施地图</a>
+            <a href="paper.html" class="cross-ref-link">📑 论文数据库</a>
+            <a href="mailbox.html" class="cross-ref-link">📬 内部邮箱</a>
+            <a href="news.html" class="cross-ref-link">📰 新闻存档</a>
+            <a href="ftp.html" class="cross-ref-link">📁 FTP服务器</a>
+            <a href="terminal.html" class="cross-ref-link">🖥 远程终端</a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="footer">
+        <p>© 1998-2026 工业技术档案馆 | 文献编号系统 v2.4</p>
+        <p style="margin-top:4px;">
+            <a href="forum.html">论坛</a> ·
+            <a href="group-chat.html">群聊</a> ·
+            <a href="doc-share.html">文档</a> ·
+            <a href="manual.html">手册</a> ·
+            <a href="map.html">地图</a> ·
+            <a href="paper.html">论文</a> ·
+            <a href="mailbox.html">邮箱</a> ·
+            <a href="news.html">新闻</a> ·
+            <a href="ftp.html">FTP</a> ·
+            <a href="terminal.html">终端</a>
+        </p>
+    </div>
+
+    <script>
+        function searchDocument() {
+            const input = document.getElementById('docNumberInput').value.trim();
+            const type = document.getElementById('docTypeSelect').value;
+
+            if (!input) {
+                showToast('⚠️ 请输入文献编号');
+                return;
+            }
+
+            const upperInput = input.toUpperCase();
+
+            if (upperInput === 'DOC-1998-0723') {
+                const detail = document.getElementById('detail2');
+                detail.classList.add('show');
+                detail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showToast('✅ 找到文献 DOC-1998-0723（SX-720维护记录）');
+            } else if (upperInput === 'DOC-1998-1102') {
+                const detail = document.getElementById('detail3');
+                detail.classList.add('show');
+                detail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showToast('🔒 文献 DOC-1998-1102 需要验证');
+            } else if (upperInput === 'DOC-1998-0451') {
+                const detail = document.getElementById('detail1');
+                detail.classList.add('show');
+                detail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showToast('✅ 找到文献 DOC-1998-0451（FANUC参数表）');
+            } else if (upperInput === 'DOC-1998-0891') {
+                const detail = document.getElementById('detail4');
+                detail.classList.add('show');
+                detail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showToast('✅ 找到文献 DOC-1998-0891（通信塔巡检记录）');
+            } else if (upperInput === 'DOC-1999-0037') {
+                const detail = document.getElementById('detail5');
+                detail.classList.add('show');
+                detail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showToast('⚠️ 文献 DOC-1999-0037 已被删节');
+            } else if (upperInput.includes('1998')) {
+                showToast('🔍 搜索1998年文献...请尝试具体编号如 DOC-1998-0723');
+            } else {
+                showToast('❌ 未找到匹配文献。试试 DOC-1998-0723');
+            }
+        }
+
+        function toggleDetail(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('show');
+            }
+        }
+
+        function verifyAccess() {
+            const code = document.getElementById('verifyCode').value.trim();
+            const resultEl = document.getElementById('verifyResult');
+            const coordContent = document.getElementById('coordContent');
+
+            if (code === '31284') {
+                resultEl.textContent = '';
+                resultEl.style.color = '#2e7d32';
+                coordContent.style.display = 'block';
+                showToast('✅ 验证通过！节点坐标已解锁');
+            } else if (code === '') {
+                resultEl.textContent = '请输入数值';
+                resultEl.style.color = '#c0392b';
+            } else {
+                resultEl.textContent = '❌ 验证失败。提示：十六进制0x7A34转十进制';
+                resultEl.style.color = '#c0392b';
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        document.getElementById('docNumberInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                searchDocument();
+            }
+        });
+
+        document.getElementById('verifyCode').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                verifyAccess();
+            }
+        });
+
+        // 页面加载时提示
+        console.log('工业技术档案馆已就绪。');
+        console.log('可查询文献编号：DOC-1998-0451, DOC-1998-0723, DOC-1998-0891, DOC-1998-1102, DOC-1999-0037');
+        console.log('提示：被涂黑（redacted）的文字可以鼠标悬停查看。');
+    </script>
+</body>
+</html>

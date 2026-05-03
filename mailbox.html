@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内部邮箱系统 - WebMail</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --sidebar-bg: #1e293b;
+            --text: #334155;
+            --muted: #94a3b8;
+            --border: #e2e8f0;
+            --primary: #3b82f6;
+            --accent: #f59e0b;
+            --unread-bg: #eff6ff;
+            --unread-border: #bfdbfe;
+            --attachment-bg: #fefce8;
+            --attachment-border: #fde68a;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: var(--sidebar-bg);
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .top-bar .logo {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-bar .nav-links {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .top-bar .nav-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .top-bar .nav-links a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .mailbox-layout {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 16px;
+        }
+
+        .sidebar {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 14px;
+            height: fit-content;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--border);
+            position: sticky;
+            top: 70px;
+        }
+
+        .sidebar .folder-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.15s;
+            margin: 2px 0;
+        }
+
+        .folder-item:hover {
+            background: #f1f5f9;
+        }
+        .folder-item.active {
+            background: #eff6ff;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .folder-item .badge {
+            background: #e2e8f0;
+            padding: 1px 7px;
+            border-radius: 10px;
+            font-size: 10px;
+            color: var(--muted);
+        }
+        .folder-item .badge.unread {
+            background: #dbeafe;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .sidebar .storage-info {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .storage-bar {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .storage-bar .used {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+            width: 34%;
+        }
+
+        .main-panel {
+            background: var(--card);
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .mail-toolbar {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #fafbfc;
+        }
+
+        .mail-toolbar button {
+            padding: 5px 12px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .mail-toolbar button:hover {
+            background: #f1f5f9;
+        }
+        .mail-toolbar .search-input {
+            margin-left: auto;
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 11px;
+            width: 180px;
+            font-family: inherit;
+        }
+
+        .email-list-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .email-list-item:hover {
+            background: #fafbfd;
+        }
+        .email-list-item.unread {
+            background: var(--unread-bg);
+            border-left: 3px solid var(--primary);
+        }
+        .email-list-item .email-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+        .email-list-item.read .email-dot {
+            background: transparent;
+        }
+        .email-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .email-info .sender {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 2px;
+        }
+        .email-info .subject {
+            font-size: 12px;
+            color: #475569;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .email-info .preview {
+            font-size: 11px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+        .email-date {
+            font-size: 10px;
+            color: var(--muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .attachment-icon {
+            font-size: 12px;
+            color: var(--accent);
+            margin-left: 4px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 650px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 28px;
+            animation: modalIn 0.25s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal .email-subject {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
+        .modal .email-meta {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal .email-body {
+            font-size: 13px;
+            line-height: 1.8;
+            color: #475569;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .modal .email-body code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+        }
+        .modal .attachment-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--attachment-bg);
+            border: 1px solid var(--attachment-border);
+            border-radius: 8px;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .modal .attachment-card:hover {
+            background: #fef9c3;
+        }
+        .modal .attachment-card .att-icon {
+            font-size: 24px;
+        }
+        .modal .attachment-card .att-name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .modal .attachment-card .att-size {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .modal .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--muted);
+            transition: color 0.2s;
+            line-height: 1;
+        }
+        .modal .close-btn:hover {
+            color: #333;
+        }
+
+        .forward-notice {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 11px;
+            color: #991b1b;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e293b;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 700px) {
+            .mailbox-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                position: static;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                padding: 10px;
+            }
+            .sidebar .folder-item {
+                font-size: 10px;
+                padding: 6px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo">📬 Echo-Mail</div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="group-chat.html">群聊</a>
+            <a href="archive.html">档案馆</a>
+            <a href="doc-share.html">文档</a>
+            <a href="recruit.html">招聘</a>
+            <a href="blog.html">博客</a>
+            <a href="ftp.html">FTP</a>
+            <a href="git.html">代码</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="mailbox-layout">
+            <!-- 左侧文件夹 -->
+            <aside class="sidebar">
+                <div class="folder-item active">📥 收件箱 <span class="badge unread">3</span></div>
+                <div class="folder-item">📤 已发送 <span class="badge">12</span></div>
+                <div class="folder-item">📁 归档 <span class="badge">47</span></div>
+                <div class="folder-item">🗑 垃圾箱 <span class="badge">5</span></div>
+                <div class="storage-info">
+                    存储空间 34% 已用
+                    <div class="storage-bar"><div class="used"></div></div>
+                </div>
+            </aside>
+
+            <!-- 右侧邮件列表 -->
+            <div class="main-panel">
+                <div class="mail-toolbar">
+                    <button>🔄 刷新</button>
+                    <button>✏️ 写邮件</button>
+                    <button>🗑 删除</button>
+                    <input type="text" class="search-input" placeholder="搜索邮件...">
+                </div>
+
+                <!-- 邮件1：未读 - 含Base64编码 -->
+                <div class="email-list-item unread" onclick="openEmail('email1')">
+                    <div class="email-dot"></div>
+                    <div class="email-info">
+                        <div class="sender">project_zeta <span style="font-weight:normal;color:var(--muted);">&#60;zeta@echo-net.work&#62;</span></div>
+                        <div class="subject">项目邀请：回声系统逆向工程 <span class="attachment-icon">📎</span></div>
+                        <div class="preview">恭喜你通过了招聘验证。以下是项目的详细资料与FTP访问凭据...</div>
+                    </div>
+                    <div class="email-date">04-30 14:22</div>
+                </div>
+
+                <!-- 邮件2：未读 - 含论文附件 -->
+                <div class="email-list-item unread" onclick="openEmail('email2')">
+                    <div class="email-dot"></div>
+                    <div class="email-info">
+                        <div class="sender">archive_seeker <span style="font-weight:normal;color:var(--muted);">&#60;seeker@echo-net.work&#62;</span></div>
+                        <div class="subject">转发：回声计划完整论文（1998） <span class="attachment-icon">📎</span></div>
+                        <div class="preview">找到了，这是未被删节的论文原文。附件中有PDF完整版...</div>
+                    </div>
+                    <div class="email-date">04-29 09:15</div>
+                </div>
+
+                <!-- 邮件3：未读 - 含坐标数据 -->
+                <div class="email-list-item unread" onclick="openEmail('email3')">
+                    <div class="email-dot"></div>
+                    <div class="email-info">
+                        <div class="sender">王工-设备维护 <span style="font-weight:normal;color:var(--muted);">&#60;wang@echo-net.work&#62;</span></div>
+                        <div class="subject">信号塔巡检照片与坐标记录 <span class="attachment-icon">📎</span></div>
+                        <div class="preview">五座信号塔的照片和GPS坐标记录。东西都在附件里...</div>
+                    </div>
+                    <div class="email-date">04-28 16:40</div>
+                </div>
+
+                <!-- 邮件4：已读 -->
+                <div class="email-list-item read" onclick="openEmail('email4')">
+                    <div class="email-dot"></div>
+                    <div class="email-info">
+                        <div class="sender">系统通知</div>
+                        <div class="subject">欢迎使用Echo-Mail内部邮箱系统</div>
+                        <div class="preview">您的邮箱账号已激活。存储配额500MB...</div>
+                    </div>
+                    <div class="email-date">04-25 08:00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 跨平台导航 -->
+        <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 18px; margin-top:16px;">
+            <p style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;">🔗 关联平台</p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <a href="forum.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">📋 论坛</a>
+                <a href="archive.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">📚 档案馆</a>
+                <a href="doc-share.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">📄 文档平台</a>
+                <a href="ftp.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">📁 FTP</a>
+                <a href="git.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">💻 代码仓库</a>
+                <a href="terminal.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eff6ff;border-radius:4px;">🖥 终端</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 邮件详情弹窗 -->
+    <div class="modal-overlay" id="emailModal">
+        <div class="modal" id="emailModalContent"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer class="footer">
+        <p>© 2026 Echo-Mail | 内部邮件系统 v1.7</p>
+        <p style="margin-top:4px;">
+            <a href="forum.html">论坛</a> ·
+            <a href="archive.html">档案馆</a> ·
+            <a href="doc-share.html">文档</a> ·
+            <a href="ftp.html">FTP</a> ·
+            <a href="git.html">代码</a> ·
+            <a href="terminal.html">终端</a>
+        </p>
+    </footer>
+
+    <script>
+        const emails = {
+            'email1': {
+                subject: '项目邀请：回声系统逆向工程',
+                from: 'project_zeta &#60;zeta@echo-net.work&#62;',
+                date: '2026-04-30 14:22',
+                body: `感谢你通过验证。以下是项目的详细资料。
+
+        FTP服务器登录凭据（请自行解码）：
+
+        dXNlcjogZ3Vlc3QKcGFzczogZWNobzE5OTgKc2VydmVyOiBmdHAuZWNoby1uZXQud29yaw==
+
+        提示：上面这段是Base64编码。解码后可获得FTP登录信息。
+
+        解码后的格式为：
+        user: [用户名]
+        pass: [密码]
+        server: [服务器地址]
+
+        登录FTP后可下载项目相关的固件包和分析工具。
+
+        如有问题请回复此邮件。`,
+                attachment: null
+            },
+            'email2': {
+                subject: '转发：回声计划完整论文（1998）',
+                from: 'archive_seeker &#60;seeker@echo-net.work&#62;',
+                date: '2026-04-29 09:15',
+                body: `终于找到了！这是回声计划的完整论文，未被删节的版本。
+
+        论文标题：《基于工业设备的分布式扩频通信网络设计》
+        作者：张明远 等
+        年份：1998年12月
+
+        关键信息摘要：
+        - 系统使用5个通信节点
+        - 节点间通过1.42GHz频段通信
+        - 采用BPSK调制与M序列扩频
+        - 序列长度为127（2^7-1）
+        - 节点坐标详见附件
+
+        完整论文PDF已附上。`,
+                attachment: { name: 'ECHO_Project_1998_Full.pdf', size: '2.8MB', type: 'pdf' }
+            },
+            'email3': {
+                subject: '信号塔巡检照片与坐标记录',
+                from: '王工-设备维护 &#60;wang@echo-net.work&#62;',
+                date: '2026-04-28 16:40',
+                body: `上周去巡检了五座信号塔。虽然官方说已经停用了，但设备间都还有微弱的运行指示。
+
+        五座塔的GPS坐标记录如下：
+
+        塔01：30.2741°N, 120.1551°E
+        塔02：30.2812°N, 120.1623°E
+        塔03：30.2698°N, 120.1698°E
+        塔04：30.2623°N, 120.1612°E
+        塔05：30.2655°N, 120.1489°E
+
+        五座塔在地图上呈正五边形排列。中心点坐标需要自行计算。
+
+        每座塔的设备铭牌上都印有"ECHO-NODE-XX"字样。
+        设备型号统一为SX-720/ECHO（定制版）。
+
+        照片附件见压缩包。`,
+                attachment: { name: 'tower_photos_20260428.zip', size: '15.3MB', type: 'zip' }
+            },
+            'email4': {
+                subject: '欢迎使用Echo-Mail内部邮箱系统',
+                from: '系统通知',
+                date: '2026-04-25 08:00',
+                body: `欢迎使用Echo-Mail内部邮箱系统。
+
+        您的账号：guest@echo-net.work
+        存储配额：500MB
+        当前使用：170MB（34%）
+
+        如有任何疑问，请联系管理员。
+
+        注意：此邮箱系统用于回声计划相关通信。外部邮件请使用其他平台。`,
+                attachment: null
+            }
+        };
+
+        function openEmail(id) {
+            const email = emails[id];
+            if (!email) return;
+
+            let attachmentHTML = '';
+            if (email.attachment) {
+                attachmentHTML = `
+                <div class="attachment-card" onclick="handleAttachment('${id}')">
+                  <span class="att-icon">📎</span>
+                  <div>
+                    <div class="att-name">${email.attachment.name}</div>
+                    <div class="att-size">${email.attachment.size} · ${email.attachment.type.toUpperCase()}</div>
+                  </div>
+                </div>`;
+            }
+
+            let forwardNotice = '';
+            if (id === 'email1') {
+                forwardNotice = `
+                <div class="forward-notice">
+                  ⚠ 此邮件包含Base64编码的FTP凭据。请自行解码后使用。
+                  Base64解码工具可在网上找到，或使用命令行：echo "编码内容" | base64 -d
+                </div>`;
+            }
+
+            const modalHTML = `
+                <button class="close-btn" onclick="closeEmailModal()">✕</button>
+                <div class="email-subject">${email.subject}</div>
+                <div class="email-meta">
+                  发件人：${email.from}<br>
+                  日期：${email.date}
+                </div>
+                <div class="email-body">${email.body}</div>
+                ${attachmentHTML}
+                ${forwardNotice}
+            `;
+
+            document.getElementById('emailModalContent').innerHTML = modalHTML;
+            document.getElementById('emailModal').classList.add('show');
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModal').classList.remove('show');
+        }
+
+        function handleAttachment(id) {
+            if (id === 'email1') {
+                showToast('📎 此附件为文本内容，Base64已显示在邮件正文中');
+            } else if (id === 'email2') {
+                showToast('📎 论文PDF已下载。关键数据请与文档平台对照。');
+                console.log('论文完整版关键数据：5节点、1.42GHz、BPSK、M序列127、五边形布局');
+            } else if (id === 'email3') {
+                showToast('📎 照片压缩包已下载。坐标数据已显示在邮件正文中。');
+                console.log('五座塔坐标已在邮件正文中。中心点需自行计算。');
+            }
+        }
+
+        document.getElementById('emailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEmailModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeEmailModal();
+        });
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        console.log('Echo-Mail 内部邮箱系统已加载。');
+        console.log('关键邮件：email1 包含Base64编码的FTP凭据');
+        console.log('Base64原文：dXNlcjogZ3Vlc3QKcGFzczogZWNobzE5OTgKc2VydmVyOiBmdHAuZWNoby1uZXQud29yaw==');
+        console.log('解码后：user: guest / pass: echo1998 / server: ftp.echo-net.work');
+    </script>
+</body>
+</html>

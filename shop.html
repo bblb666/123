@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二手设备交易 - 闲鱼集市</title>
+    <style>
+        :root {
+            --bg: #f5f5f5;
+            --card: #ffffff;
+            --text: #333333;
+            --muted: #999999;
+            --border: #e8e8e8;
+            --primary: #ff5000;
+            --primary-dark: #e04400;
+            --tag-bg: #fff0e8;
+            --tag-text: #ff5000;
+            --price-color: #ff2442;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: var(--primary);
+            color: #fff;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .top-bar .logo {
+            font-size: 16px;
+            font-weight: 700;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .top-bar .nav-links {
+            display: flex;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+        .top-bar .nav-links a {
+            color: #ffe0d0;
+            text-decoration: none;
+            font-size: 9px;
+            padding: 3px 7px;
+            border-radius: 2px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .top-bar .nav-links a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 14px auto;
+            padding: 0 14px;
+        }
+
+        .item-card {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        .item-card:hover {
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .item-thumb {
+            width: 100px;
+            height: 100px;
+            border-radius: 6px;
+            background: #f0f0f0;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            overflow: hidden;
+            position: relative;
+        }
+        .item-thumb .badge {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-size: 8px;
+            padding: 1px 5px;
+            border-radius: 2px;
+        }
+
+        .item-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .item-info .item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .item-info .item-desc {
+            font-size: 10px;
+            color: var(--muted);
+            margin: 4px 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .item-info .item-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--price-color);
+        }
+        .item-info .item-meta {
+            font-size: 9px;
+            color: var(--muted);
+            display: flex;
+            gap: 8px;
+        }
+        .item-tag {
+            display: inline-block;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 8px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 560px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            animation: modalIn 0.2s ease;
+        }
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .modal .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal .item-images {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .modal .item-images .img-box {
+            width: 120px;
+            height: 120px;
+            border-radius: 6px;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            cursor: zoom-in;
+            border: 1px solid var(--border);
+            position: relative;
+            transition: all 0.2s;
+        }
+        .modal .item-images .img-box:hover {
+            border-color: var(--primary);
+            transform: scale(1.03);
+        }
+        .modal .item-images .img-box .zoom-hint {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 0 4px;
+            border-radius: 2px;
+        }
+        .modal .detail-section {
+            margin-top: 10px;
+        }
+        .modal .detail-section h4 {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .modal .detail-section p {
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .modal .detail-section code {
+            background: #f5f5f5;
+            padding: 1px 5px;
+            border-radius: 2px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 10px;
+        }
+
+        .contact-bar {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .contact-bar button {
+            flex: 1;
+            padding: 8px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: #fff;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .contact-bar button.primary {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 9px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            margin-top: 14px;
+        }
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo">🛒 闲鱼集市 · 二手设备</div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="manual.html">手册</a>
+            <a href="archive.html">档案馆</a>
+            <a href="map.html">地图</a>
+            <a href="weather.html">环境</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 商品1：核心商品 -->
+        <div class="item-card" onclick="openItem('item1')">
+            <div class="item-thumb" style="background:#e8f0e8;">
+                ⚙️
+                <span class="badge">8图</span>
+            </div>
+            <div class="item-info">
+                <div>
+                    <span class="item-tag">变频器</span>
+                    <span class="item-tag">老设备</span>
+                    <div class="item-title">SX-720/ECHO 变频器 1998年定制版 带铭牌</div>
+                    <div class="item-desc">工厂拆迁拆下来的，型号特殊带/ECHO后缀。设备间拆的，DIP开关配置未改动。</div>
+                </div>
+                <div>
+                    <div class="item-price">¥ 680</div>
+                    <div class="item-meta"><span>👤 设备收藏家</span><span>📍 同城</span><span>👁 1.2K</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 商品2 -->
+        <div class="item-card" onclick="openItem('item2')">
+            <div class="item-thumb" style="background:#e8e8f0;">📡</div>
+            <div class="item-info">
+                <div>
+                    <span class="item-tag">信号塔配件</span>
+                    <div class="item-title">ECHO-NODE-04 通信塔拆机板卡 含铭牌</div>
+                    <div class="item-desc">信号塔拆除时留下的板卡，上面印着ECHO-NODE-04字样。不知道有什么用，出给懂的人。</div>
+                </div>
+                <div>
+                    <div class="item-price">¥ 150</div>
+                    <div class="item-meta"><span>👤 废品回收王</span><span>📍 同城</span><span>👁 876</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 商品3 -->
+        <div class="item-card" onclick="openItem('item3')">
+            <div class="item-thumb" style="background:#f0e8e0;">📖</div>
+            <div class="item-info">
+                <div>
+                    <span class="item-tag">说明书</span>
+                    <div class="item-title">SX-720 原厂说明书 1998版 纸质</div>
+                    <div class="item-desc">带附录的完整版说明书，含DIP开关配置详解。附录部分有手写笔记。</div>
+                </div>
+                <div>
+                    <div class="item-price">¥ 45</div>
+                    <div class="item-meta"><span>👤 旧书店老张</span><span>📍 包邮</span><span>👁 432</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;">
+            <p style="font-size:9px;color:var(--muted);margin-bottom:6px;">🔗 相关平台</p>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                <a href="manual.html" style="font-size:9px;color:var(--primary);text-decoration:none;padding:3px 8px;background:#fff0e8;border-radius:3px;">📖 说明书库</a>
+                <a href="archive.html" style="font-size:9px;color:var(--primary);text-decoration:none;padding:3px 8px;background:#fff0e8;border-radius:3px;">📚 档案馆</a>
+                <a href="map.html" style="font-size:9px;color:var(--primary);text-decoration:none;padding:3px 8px;background:#fff0e8;border-radius:3px;">🗺 地图</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal" id="itemModalContent"></div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <div class="footer"><p>闲鱼集市 · 二手设备交易 | 信息仅供参考</p></div>
+
+    <script>
+        const items = {
+            'item1': {
+                title: 'SX-720/ECHO 变频器 1998年定制版',
+                price: '¥ 680',
+                seller: '设备收藏家',
+                desc: `工厂拆迁拆下来的设备。型号SX-720/ECHO，带/ECHO后缀的定制版非常罕见。
+        设备铭牌完好，上面清晰印着：
+        <code>MODEL: SX-720/ECHO</code>
+        <code>S/N: ECHO-1998-0451</code>
+        <code>DATE: 1998-06</code>
+        DIP开关维持出厂默认配置，未做改动。
+        有意者私聊，可拍详细照片。`,
+                images: [
+                    { label: '设备正面', icon: '⚙️', hint: '完整铭牌' },
+                    { label: '铭牌特写', icon: '🏷', hint: 'SX-720/ECHO' },
+                    { label: 'DIP开关', icon: '🔘', hint: '8位开关面板' },
+                    { label: '参数标签', icon: '📋', hint: '4950-4952' },
+                ]
+            },
+            'item2': {
+                title: 'ECHO-NODE-04 通信塔拆机板卡',
+                price: '¥ 150',
+                seller: '废品回收王',
+                desc: `从废弃通信塔上拆下来的板卡。上面印着<code>ECHO-NODE-04</code>。
+        板卡上有SX-720的接口，应该是配套使用的。
+        塔的位置在市区边缘，坐标大概是<code>30.2623°N, 120.1612°E</code>。
+        一共拆了5块，每块对应一个节点。这是其中一块。`,
+                images: [
+                    { label: '板卡正面', icon: '📡', hint: 'ECHO-NODE-04' },
+                    { label: '接口特写', icon: '🔌', hint: 'SX-720接口' },
+                ]
+            },
+            'item3': {
+                title: 'SX-720 原厂说明书 1998版',
+                price: '¥ 45',
+                seller: '旧书店老张',
+                desc: `整理旧书时翻出来的。SX-720原厂说明书，1998年版，保存完好。
+        附录部分有前任主人的手写笔记，记录了DIP开关的配置方法和参数4950-4952的数值。
+        手写内容：
+        <code>4950=0x7A34, 4951=0x4C4F, 4952=0x434B</code>
+        旁边还写着"ASCII → z4LOCK"。`,
+                images: [
+                    { label: '封面', icon: '📖', hint: 'SX-720 Manual' },
+                    { label: '附录页', icon: '📝', hint: '手写笔记' },
+                ]
+            },
+        };
+
+        function openItem(id) {
+            const item = items[id];
+            if (!item) return;
+            const imgsHTML = item.images.map(img => `
+                <div class="img-box" onclick="zoomImage('${img.label}')" title="${img.hint}">
+                  ${img.icon}
+                  <span class="zoom-hint">🔍</span>
+                </div>`).join('');
+
+            document.getElementById('itemModalContent').innerHTML = `
+                <button class="close-btn" onclick="closeItemModal()">✕</button>
+                <h3 style="font-size:15px;">${item.title}</h3>
+                <div style="font-size:20px;font-weight:700;color:var(--price-color);">${item.price}</div>
+                <div style="font-size:10px;color:var(--muted);">👤 ${item.seller}</div>
+                <div class="item-images">${imgsHTML}</div>
+                <div class="detail-section">
+                  <h4>📋 详细描述</h4>
+                  <p>${item.desc}</p>
+                </div>
+                <div class="contact-bar">
+                  <button>❤ 收藏</button>
+                  <button class="primary" onclick="contactSeller('${id}')">💬 联系卖家</button>
+                </div>`;
+            document.getElementById('itemModal').classList.add('show');
+        }
+
+        function zoomImage(label) {
+            showToast('🔍 查看大图：' + label);
+        }
+        function contactSeller(id) {
+            if (id === 'item1') {
+                showToast('💬 卖家回复：铭牌上型号SX-720/ECHO确认是定制版。DIP开关配置可去说明书库查。');
+            } else if (id === 'item2') {
+                showToast('💬 卖家回复：板卡上印的NODE-04对应坐标在地图平台有标记。');
+            } else {
+                showToast('💬 卖家回复：详情请看商品描述。');
+            }
+        }
+        function closeItemModal() {
+            document.getElementById('itemModal').classList.remove('show');
+        }
+        document.getElementById('itemModal').addEventListener('click', function(e) {
+            if (e.target === this) closeItemModal();
+        });
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+        console.log('二手交易平台已加载。关键：SX-720/ECHO铭牌、NODE-04板卡、手写笔记参数。');
+    </script>
+</body>
+</html>

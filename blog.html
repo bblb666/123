@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>退役工程师的记事本 - 个人技术博客</title>
+    <style>
+        :root {
+            --bg: #1a1a1a;
+            --card-bg: #0f0f0f;
+            --text: #c0c0c0;
+            --muted: #6a6a6a;
+            --accent: #00cc66;
+            --link: #00aaff;
+            --border: #2a2a2a;
+            --highlight: #ffcc00;
+            --hidden-text: #1a1a1a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'SF Mono', 'Consolas', 'Noto Sans SC', 'Microsoft YaHei', monospace;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            min-height: 100vh;
+        }
+
+        .blog-header {
+            background: #0a0a0a;
+            border-bottom: 1px solid var(--border);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .blog-header .site-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--accent);
+            white-space: nowrap;
+            letter-spacing: 1px;
+        }
+
+        .blog-header .site-title span {
+            color: var(--muted);
+            font-weight: normal;
+            font-size: 14px;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .header-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 11px;
+            padding: 4px 9px;
+            border: 1px solid #333;
+            border-radius: 3px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .header-links a:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 24px auto;
+            padding: 0 20px;
+        }
+
+        .blog-post {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 28px 24px;
+            margin-bottom: 20px;
+            border-radius: 2px;
+        }
+
+        .blog-post .post-date {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .blog-post h2 {
+            font-size: 16px;
+            color: #00ccff;
+            margin-bottom: 14px;
+            font-weight: normal;
+            letter-spacing: 1px;
+        }
+
+        .blog-post p {
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .blog-post .code-block {
+            background: #000000;
+            border: 1px solid #1a1a1a;
+            padding: 14px 18px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #cccccc;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .blog-post .code-block .dim {
+            color: #666;
+        }
+
+        .blog-post .code-block .bright {
+            color: #ffcc00;
+        }
+
+        .hidden-text {
+            color: var(--hidden-text);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .hidden-text:hover {
+            color: #ff4444;
+        }
+
+        .inline-code {
+            background: #000;
+            padding: 1px 5px;
+            border: 1px solid #333;
+            font-size: 11px;
+        }
+
+        .ref-link {
+            color: var(--link);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--link);
+        }
+
+        .ref-link:hover {
+            color: #ffffff;
+            border-bottom-color: #ffffff;
+        }
+
+        .comment-section {
+            margin-top: 20px;
+            border-top: 1px solid #222;
+            padding-top: 16px;
+        }
+
+        .comment-section h4 {
+            font-size: 12px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .comment-item {
+            background: #111;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            border-left: 2px solid #333;
+            font-size: 11px;
+        }
+
+        .comment-item .comment-author {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .comment-form {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .comment-form textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: #000;
+            border: 1px solid #333;
+            color: #ccc;
+            font-family: inherit;
+            font-size: 12px;
+            resize: vertical;
+            min-height: 60px;
+            transition: border-color 0.2s;
+        }
+
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .comment-form button {
+            align-self: flex-end;
+            padding: 7px 18px;
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .comment-form button:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #0a0a0a;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 18px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+            font-family: 'Courier New', monospace;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid #222;
+        }
+
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: var(--accent);
+        }
+
+        .cursor-blink {
+            animation: blink 1s step-end infinite;
+            color: var(--accent);
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .blog-post {
+                padding: 18px 14px;
+            }
+            .blog-post h2 {
+                font-size: 14px;
+            }
+            .blog-post p {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="blog-header">
+        <div class="site-title">
+            > retired_eng.log<span class="cursor-blink">_</span>
+            <span>/ 退役工程师的记事本</span>
+        </div>
+        <div class="header-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="group-chat.html">群聊</a>
+            <a href="archive.html">档案馆</a>
+            <a href="recruit.html">招聘</a>
+            <a href="doc-share.html">文档</a>
+            <a href="mailbox.html">邮箱</a>
+            <a href="manual.html">手册</a>
+            <a href="ftp.html">FTP</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 文章1 -->
+        <article class="blog-post">
+            <div class="post-date">2026-04-15 23:47</div>
+            <h2>> 关于那座信号塔的维护笔记</h2>
+            <p>
+                今天去检查了那座标注为"停用"的通信塔。外观上看，天线阵列已经锈蚀，
+                机房的门锁也坏了。但打开配电箱后，发现设备间还有微弱的电流声。
+            </p>
+            <p>
+                用万用表测量了几个端子的电压。发现一个有趣的现象：每隔一段时间，
+                某个端子的电平会从 <span class="inline-code">0.5V</span> 跳变到
+                <span class="inline-code">3.3V</span>，持续约2秒后恢复。
+            </p>
+            <p>
+                我用数据记录器采集了大约一小时的波形，结果如下：
+            </p>
+            <div class="code-block">
+                <span class="dim"># 记录到的电压序列（采样间隔1秒）</span>
+                <span class="dim"># 仅显示跳变时刻附近的数据</span>
+                0.5, 0.5, 0.5, <span class="bright">3.3</span>, 0.5, 0.5, 0.5, ...
+                <span class="dim"># 两次跳变之间的采样点数：</span>
+                <span class="bright">127</span>
+                <span class="dim"># 这意味着精确周期为127秒</span>
+                <span class="dim"># 127 = 2^7 - 1</span>
+            </div>
+            <p>
+                这个数字太规整了，不可能是自然现象。<span class="hidden-text">扩频通信中M序列的典型长度就是2^n-1。</span>
+            </p>
+            <p>
+                更奇怪的是，如果把电压序列转换成二进制（0.5V=0, 3.3V=1），
+                得到的一串比特看起来像是<span class="hidden-text">伪随机序列</span>。
+                我截取了一段放在
+                <a href="doc-share.html" class="ref-link">在线文档平台</a>上。
+            </p>
+            <p>
+                相关参数记录在 <a href="archive.html" class="ref-link">档案馆</a> 的
+                <span class="inline-code">DOC-1998-0891</span> 号文献中。
+            </p>
+
+            <div class="comment-section">
+                <h4>> 评论 (3)</h4>
+                <div class="comment-item">
+                    <span class="comment-author">rf_expert</span>：127秒这个周期值和FTP上IQ数据的时间戳间隔吻合。你已经算出来了吗？
+                </div>
+                <div class="comment-item">
+                    <span class="comment-author">old_tech</span>：我就知道那个塔还在运行。1998年装上去之后从来没人去关过。
+                </div>
+                <div class="comment-item" id="commentThread1">
+                    <span class="comment-author">retired_eng</span>：回复 old_tech：你知道内情？那座塔的DIP开关配置是什么？
+                </div>
+                <div class="comment-form">
+                    <textarea placeholder="> 输入评论..." id="commentInput1"></textarea>
+                    <button onclick="submitComment('1')">发表评论</button>
+                </div>
+            </div>
+        </article>
+
+        <!-- 文章2 -->
+        <article class="blog-post">
+            <div class="post-date">2026-04-20 18:12</div>
+            <h2>> 关于"Link_broken"的含义</h2>
+            <p>
+                有人发邮件问我 <span class="inline-code">~Link_broken~</span> 是什么意思。
+                我在此统一回复。
+            </p>
+            <p>
+                在旧系统中，波浪线 <span class="inline-code">~</span> 通常有两种含义：<br>
+                1. 逻辑取反（NOT）<br>
+                2. 转义字符
+            </p>
+            <p>
+                如果是取反，那么 <span class="inline-code">~Link_broken~</span> 的意思就是
+                <span class="hidden-text">Link_active —— 连接处于活动状态</span>。
+            </p>
+            <p>
+                这意味着那条通信链路<span class="hidden-text">并未断开，仍在运行</span>。
+                我在 <a href="manual.html" class="ref-link">设备说明书</a> 的附录中找到了一些佐证，
+                SX-720的调试模式可以强制激活链路。
+            </p>
+            <p>
+                那串十六进制原文在 <a href="doc-share.html" class="ref-link">文档共享平台</a> 上有扫描件。
+            </p>
+
+            <div class="comment-section">
+                <h4>> 评论 (2)</h4>
+                <div class="comment-item">
+                    <span class="comment-author">signal_hunter</span>：所以取反之后就是"连接正常"？那为什么还要用波浪线包起来？
+                </div>
+                <div class="comment-item">
+                    <span class="comment-author">retired_eng</span>：回复 signal_hunter：波浪线成对出现表示这是一个整体表达式。自己去查旧系统的文档规范。
+                </div>
+                <div class="comment-form">
+                    <textarea placeholder="> 输入评论..." id="commentInput2"></textarea>
+                    <button onclick="submitComment('2')">发表评论</button>
+                </div>
+            </div>
+        </article>
+
+        <!-- 文章3 -->
+        <article class="blog-post">
+            <div class="post-date">2026-04-25 09:33</div>
+            <h2>> 参数4950与0x7A34的数学关系</h2>
+            <p>
+                有人在论坛上问参数4950的值 <span class="inline-code">0x7A34</span> 代表什么。
+                我在这里写一下我的分析。
+            </p>
+            <p>
+                首先，<span class="inline-code">0x7A34</span> 是一个十六进制数。
+                转换成十进制是 <span class="hidden-text">31284</span>。
+            </p>
+            <p>
+                这个数值本身看起来没有什么特殊意义。但是如果你把它和
+                <span class="inline-code">127</span>（脉冲周期）做除法：
+            </p>
+            <div class="code-block">
+                <span class="dim"># 计算</span>
+                31284 ÷ 127 = <span class="bright">246.3307...</span>
+                <span class="dim"># 不是整数</span>
+                <span class="dim"># 试试反过来</span>
+                127 ÷ 31284 ≈ 0.004059...
+                <span class="dim"># 同样不是整数</span>
+            </div>
+            <p>
+                所以这两个数字之间<span class="hidden-text">不存在简单的整数倍率关系</span>。
+                但它们确实属于同一个系统。
+            </p>
+            <p>
+                参数4950-4952的三个值合起来的ASCII字符串是一个词，
+                在 <a href="terminal.html" class="ref-link">远程终端</a> 上可以用到。
+            </p>
+            <p>
+                更多参数说明见 <a href="manual.html" class="ref-link">设备说明书库</a>。
+            </p>
+
+            <div class="comment-section">
+                <h4>> 评论 (4)</h4>
+                <div class="comment-item">
+                    <span class="comment-author">math_geek</span>：31284和127没有整数关系，但31284这个数字本身可能是一个密码或密钥。
+                </div>
+                <div class="comment-item">
+                    <span class="comment-author">cnc_expert</span>：回复 math_geek：同意。0x7A34转换后直接作为FANUC系统的隐藏参数值使用。
+                </div>
+                <div class="comment-item">
+                    <span class="comment-author">project_zeta</span>：如果你算出了31284，请去招聘页提交。这是验证问题之一。
+                </div>
+                <div class="comment-item" id="commentThread3">
+                    <span class="comment-author">retired_eng</span>：回复 project_zeta：我只是提供信息。具体用途你们自己判断。
+                </div>
+                <div class="comment-form">
+                    <textarea placeholder="> 输入评论..." id="commentInput3"></textarea>
+                    <button onclick="submitComment('3')">发表评论</button>
+                </div>
+            </div>
+        </article>
+
+        <!-- 文章4 -->
+        <article class="blog-post">
+            <div class="post-date">2026-04-30 14:55</div>
+            <h2>> 坐标汇合点的计算思路</h2>
+            <p>
+                有人私下问我五个节点坐标的汇合点怎么算。这里给出思路，不给出答案。
+            </p>
+            <p>
+                五个点在一个圆周上，构成<span class="hidden-text">正五边形</span>。
+                如果你有五个顶点的经纬度，计算外接圆圆心就是汇合点。
+            </p>
+            <p>
+                坐标数据在 <a href="archive.html" class="ref-link">档案馆</a> 的
+                <span class="inline-code">DOC-1998-1102</span> 号文献中（需要验证）。
+            </p>
+            <p>
+                计算工具可以使用 <a href="map.html" class="ref-link">工业设施地图</a> 上的测距功能。
+                或者自己写个脚本算。
+            </p>
+            <p>
+                另外，汇合点的<span class="hidden-text">环境监测数据</span>在
+                <a href="weather.html" class="ref-link">环境监测站</a> 上有记录，
+                那个站恰好位于汇合点附近。
+            </p>
+
+            <div class="comment-section">
+                <h4>> 评论 (1)</h4>
+                <div class="comment-item">
+                    <span class="comment-author">geo_enthusiast</span>：五个坐标我拿到了。算出来的中心点经纬度大约在30.274°N, 120.159°E附近。那里确实是个废弃工厂。
+                </div>
+                <div class="comment-form">
+                    <textarea placeholder="> 输入评论..." id="commentInput4"></textarea>
+                    <button onclick="submitComment('4')">发表评论</button>
+                </div>
+            </div>
+        </article>
+
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer class="footer">
+        <p>> © 2019-2026 retired_eng.log | 退役工程师的记事本</p>
+        <p style="margin-top:4px;">
+            <a href="forum.html">论坛</a> ·
+            <a href="group-chat.html">群聊</a> ·
+            <a href="archive.html">档案馆</a> ·
+            <a href="recruit.html">招聘</a> ·
+            <a href="doc-share.html">文档</a> ·
+            <a href="mailbox.html">邮箱</a> ·
+            <a href="manual.html">手册</a> ·
+            <a href="ftp.html">FTP</a> ·
+            <a href="map.html">地图</a> ·
+            <a href="weather.html">环境</a> ·
+            <a href="terminal.html">终端</a>
+        </p>
+    </footer>
+
+    <script>
+        function submitComment(articleId) {
+            const input = document.getElementById('commentInput' + articleId);
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) {
+                showToast('> 请输入评论内容');
+                return;
+            }
+
+            // 根据不同的文章和玩家输入给出不同回应
+            const lower = text.toLowerCase();
+
+            setTimeout(() => {
+                if (articleId === '1') {
+                    if (lower.includes('127') || lower.includes('周期')) {
+                        addComment(articleId, 'retired_eng',
+                            '没错，127秒是精确周期。这个数值本身就是线索。2^7-1不是巧合。');
+                        showToast('> 博主回复了你的评论');
+                    } else if (lower.includes('ftp') || lower.includes('iq') || lower.includes('数据')) {
+                        addComment(articleId, 'retired_eng',
+                            'FTP上的IQ数据我下载过。采样率2MS/s，数一下脉冲间的采样点数就能算出周期。动手算吧。');
+                        showToast('> 博主回复了你的评论');
+                    } else if (lower.includes('二进制') || lower.includes('序列')) {
+                        addComment(articleId, 'retired_eng',
+                            '你也注意到那个二进制序列了？完整的比特流在文档共享平台。看看能不能拼出有意义的信息。');
+                        showToast('> 博主回复了你的评论');
+                    } else {
+                        addComment(articleId, 'retired_eng',
+                            '感谢关注。更多数据请查看FTP服务器和文档平台。');
+                        showToast('> 博主回复了你的评论');
+                    }
+                } else if (articleId === '2') {
+                    if (lower.includes('取反') || lower.includes('link_active') || lower.includes('活跃')) {
+                        addComment(articleId, 'retired_eng',
+                            '你理解对了。~Link_broken~取反就是链路活跃。这意味着通信系统一直在运行，从未真正关闭。');
+                        showToast('> 博主回复了你的评论');
+                    } else if (lower.includes('十六进制') || lower.includes('解码') || lower.includes('ascii')) {
+                        addComment(articleId, 'retired_eng',
+                            '那串十六进制你自己转ASCII就行。转出来是什么词，评论区告诉我。');
+                        showToast('> 博主回复了你的评论');
+                    } else {
+                        addComment(articleId, 'retired_eng',
+                            '波浪线的含义在旧系统文档中有明确定义。建议去说明书库查查。');
+                        showToast('> 博主回复了你的评论');
+                    }
+                } else if (articleId === '3') {
+                    if (lower.includes('31284')) {
+                        addComment(articleId, 'retired_eng',
+                            '31284——你算对了。这个数字是招聘页的验证答案，也是FTP压缩包的解压密码组成部分。');
+                        showToast('> 博主回复了你的评论');
+                    } else if (lower.includes('z4lock') || lower.includes('ascii')) {
+                        addComment(articleId, 'retired_eng',
+                            '三个参数值转ASCII确实是一个词。这个词的用途在远程终端那里。');
+                        showToast('> 博主回复了你的评论');
+                    } else {
+                        addComment(articleId, 'retired_eng',
+                            '0x7A34转十进制是基本功。算出来之后你会发现它的用途。');
+                        showToast('> 博主回复了你的评论');
+                    }
+                } else if (articleId === '4') {
+                    if (lower.includes('五边形') || lower.includes('中心') || lower.includes('汇合')) {
+                        addComment(articleId, 'retired_eng',
+                            '计算五边形中心点确实是关键一步。算出来后去地图平台验证。汇合点有环境监测站的数据作为佐证。');
+                        showToast('> 博主回复了你的评论');
+                    } else if (lower.includes('坐标') || lower.includes('经纬度')) {
+                        addComment(articleId, 'retired_eng',
+                            '坐标在档案馆的加密文献中。你需要通过验证才能看到。验证问题在参数相关的帖子里有提示。');
+                        showToast('> 博主回复了你的评论');
+                    } else {
+                        addComment(articleId, 'retired_eng',
+                            '坐标数据分散在多个平台。档案馆、地图、新闻存档各有一部分。需要自己拼起来。');
+                        showToast('> 博主回复了你的评论');
+                    }
+                }
+
+                input.value = '';
+            }, 800 + Math.random() * 1200);
+        }
+
+        function addComment(articleId, author, text) {
+            const threadId = 'commentThread' + articleId;
+            const thread = document.getElementById(threadId);
+            if (!thread) return;
+
+            const newComment = document.createElement('div');
+            newComment.className = 'comment-item';
+            newComment.innerHTML = `<span class="comment-author">${author}</span>：${text}`;
+            thread.parentNode.insertBefore(newComment, thread.nextSibling);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        console.log('> retired_eng.log 已加载');
+        console.log('> 提示：文章中有隐藏文字（与背景同色），鼠标悬停可查看');
+        console.log('> 提示：评论区可互动，博主的回复包含线索指引');
+    </script>
+</body>
+</html>
