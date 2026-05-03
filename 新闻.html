@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地方科技报 - 新闻存档</title>
+    <style>
+        :root {
+            --bg: #f5f0e8;
+            --card: #fefdfb;
+            --text: #3d3226;
+            --muted: #8c7b6b;
+            --border: #d4c5b0;
+            --accent: #8b4513;
+            --link: #6b3a1f;
+            --highlight: #fff8e7;
+            --highlight-border: #e8d5a0;
+            --tag-bg: #f0e8d8;
+            --tag-text: #6b4e2e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SimSun', 'STSong', 'Noto Serif SC', 'KaiTi', 'Microsoft YaHei', serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            min-height: 100vh;
+        }
+
+        .newspaper-header {
+            background: #fefdfb;
+            border-bottom: 3px double #3d3226;
+            padding: 20px 24px 14px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .newspaper-header .masthead {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 6px;
+            color: #1a1008;
+            font-family: 'STSong', 'SimSun', serif;
+        }
+
+        .newspaper-header .subtitle {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+
+        .newspaper-header .dateline {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .header-nav a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .header-nav a:hover {
+            color: var(--accent);
+            background: #f5f0e8;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .archive-notice {
+            background: var(--highlight);
+            border: 1px solid var(--highlight-border);
+            padding: 10px 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 11px;
+            color: #8a6d3b;
+            text-align: center;
+        }
+
+        .news-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 22px 26px;
+            margin-bottom: 14px;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            transition: box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .news-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .news-card .news-date {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .news-card h3 {
+            font-size: 16px;
+            color: #1a1008;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .news-card .news-summary {
+            font-size: 12px;
+            color: #5a4a3a;
+            line-height: 1.7;
+        }
+
+        .news-card .news-tags {
+            margin-top: 8px;
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .news-tag {
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .expanded-content {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+            font-size: 12px;
+            line-height: 1.8;
+            color: #4a3a2a;
+        }
+
+        .expanded-content.show {
+            display: block;
+        }
+
+        .expanded-content .highlight-num {
+            color: #8b4513;
+            font-weight: bold;
+        }
+
+        .expanded-content .redacted {
+            background: #3d3226;
+            color: #3d3226;
+            padding: 1px 5px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .expanded-content .redacted:hover {
+            background: transparent;
+            color: #c0392b;
+            font-weight: bold;
+        }
+
+        .cross-ref {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--link);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--link);
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .cross-ref:hover {
+            color: #1a1008;
+            border-bottom-color: #1a1008;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #3d3226;
+            color: #f5f0e8;
+            padding: 10px 18px;
+            border-radius: 4px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .newspaper-header .masthead {
+                font-size: 24px;
+                letter-spacing: 3px;
+            }
+            .news-card {
+                padding: 16px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="newspaper-header">
+        <div class="masthead">地方科技报</div>
+        <div class="subtitle">DIFANG KEJI BAO · 工业与技术新闻</div>
+        <div class="dateline">新闻存档 · 1998年合订本数字化</div>
+        <div class="header-nav">
+            <a href="forum.html">← 返回论坛</a>
+            <a href="group-chat.html">群聊</a>
+            <a href="archive.html">档案馆</a>
+            <a href="blog.html">博客</a>
+            <a href="map.html">地图</a>
+            <a href="weather.html">环境监测</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div class="archive-notice">
+            📰 您正在查看1998年《地方科技报》的数字化存档。部分文章经过OCR识别，可能存在少量文字错误。
+            所有新闻按时间倒序排列。点击文章可展开详细内容。
+        </div>
+
+        <!-- 新闻1 -->
+        <article class="news-card" onclick="toggleNews('news1')">
+            <div class="news-date">1998年12月18日 · 第287期 · 第3版</div>
+            <h3>五座新型通信塔建成并投入使用</h3>
+            <div class="news-summary">
+                本市及周边地区五座新型工业通信塔于近日完成调试并正式投入运行。
+                据项目负责人介绍，该通信网络采用先进的扩频技术，主要用于工业设备间的数据传输...
+            </div>
+            <div class="news-tags">
+                <span class="news-tag">通信</span>
+                <span class="news-tag">基础设施</span>
+                <span class="news-tag">工业自动化</span>
+            </div>
+            <div class="expanded-content" id="news1">
+                <p>本报讯（记者 李明远）经过半年的施工与调试，分布在本市及周边地区的<strong>五座</strong>新型工业通信塔已于近日全部建成并投入运行。</p>
+                <p>该项目由星辰通信技术有限公司承建，采用当时先进的<span class="redacted" title="鼠标悬停查看">扩频通信</span>技术。五座通信塔的地理布局经过精心设计，
+                    形成<span class="redacted" title="鼠标悬停查看">正五边形</span>覆盖网络，覆盖半径约<span class="highlight-num">15公里</span>。</p>
+                <p>项目负责人张明远工程师表示："这套系统主要为工业自动化设备提供可靠的数据传输通道。"
+                    但他拒绝透露更多技术细节，称"涉及商业机密"。</p>
+                <p>每座通信塔高约<span class="highlight-num">45米</span>，配备有SX系列工业级变频设备。
+                    塔身编号分别为<span class="highlight-num">NODE-01至NODE-05</span>。</p>
+                <p style="color:#8b6b4b; font-size:11px;">📝 注：此新闻与 <a href="archive.html" class="cross-ref">档案馆 DOC-1998-0891</a> 号文献中记录的通信塔信息一致。</p>
+            </div>
+        </article>
+
+        <!-- 新闻2 -->
+        <article class="news-card" onclick="toggleNews('news2')">
+            <div class="news-date">1998年11月05日 · 第276期 · 第5版</div>
+            <h3>星辰通信获"工业自动化创新奖"</h3>
+            <div class="news-summary">
+                在刚刚结束的全国工业自动化技术博览会上，星辰通信技术有限公司凭借其"回声"分布式通信系统荣获创新奖...
+            </div>
+            <div class="news-tags">
+                <span class="news-tag">企业动态</span>
+                <span class="news-tag">奖项</span>
+                <span class="news-tag">自动化</span>
+            </div>
+            <div class="expanded-content" id="news2">
+                <p>本报讯 在全国工业自动化技术博览会上，星辰通信技术有限公司的"回声"（<span class="highlight-num">ECHO</span>）分布式通信系统获得评委一致好评，荣获本届博览会"工业自动化创新奖"。</p>
+                <p>据悉，该系统利用现有的<span class="redacted" title="鼠标悬停查看">工业设备</span>作为信号中继节点，无需铺设专用通信线路，
+                    即可实现大范围的工业数据互联。这一创新大幅降低了通信基础设施的建设成本。</p>
+                <p>获奖后，星辰通信表示将在本市率先部署<span class="highlight-num">五个</span>试点节点，
+                    分别位于市区的<span class="redacted" title="鼠标悬停查看">关键工业设施</span>附近。</p>
+                <p style="color:#8b6b4b; font-size:11px;">📝 注：该系统的详细技术论文可在 <a href="paper.html" class="cross-ref">论文数据库</a> 中查阅。</p>
+            </div>
+        </article>
+
+        <!-- 新闻3 -->
+        <article class="news-card" onclick="toggleNews('news3')">
+            <div class="news-date">1998年08月22日 · 第243期 · 第2版</div>
+            <h3>本市工业区启动通信基础设施升级工程</h3>
+            <div class="news-summary">
+                市工业局批准了一项通信基础设施升级计划，将在五个主要工业区新建或改造通信塔...
+            </div>
+            <div class="news-tags">
+                <span class="news-tag">政策</span>
+                <span class="news-tag">基础设施</span>
+                <span class="news-tag">规划</span>
+            </div>
+            <div class="expanded-content" id="news3">
+                <p>本报讯 市工业局于近日批准了由星辰通信技术有限公司提交的通信基础设施升级方案。
+                    根据方案，将在五个主要工业区<span class="redacted" title="鼠标悬停查看">新建通信塔</span>，
+                    并对现有部分设施进行改造。</p>
+                <p>五个工业区的位置经过精心选址，力求实现<span class="redacted" title="鼠标悬停查看">最优信号覆盖</span>。
+                    具体选址坐标为：</p>
+                <p style="font-size:11px; color:#666;">（坐标数据因涉及保密信息，在数字化时已被移除。请参考 <a href="map.html" class="cross-ref">工业设施地图</a> 中的标记。）</p>
+                <p>项目预计于<span class="highlight-num">1998年12月</span>前完工。</p>
+            </div>
+        </article>
+
+        <!-- 新闻4 -->
+        <article class="news-card" onclick="toggleNews('news4')">
+            <div class="news-date">1998年06月15日 · 第206期 · 第6版</div>
+            <h3>技术前沿：扩频通信在工业领域的应用前景</h3>
+            <div class="news-summary">
+                本报记者专访了通信技术专家张明远，请他谈谈扩频通信技术在工业自动化领域的应用前景...
+            </div>
+            <div class="news-tags">
+                <span class="news-tag">技术科普</span>
+                <span class="news-tag">扩频通信</span>
+                <span class="news-tag">专访</span>
+            </div>
+            <div class="expanded-content" id="news4">
+                <p>本报记者专访了星辰通信的首席工程师张明远。</p>
+                <p><strong>记者：</strong>什么是扩频通信？</p>
+                <p><strong>张明远：</strong>简单来说，扩频通信就是把信号分散到一个很宽的频带上传输。
+                    我们采用的技术叫做<span class="redacted" title="鼠标悬停查看">M序列扩频</span>，
+                    利用伪随机序列对信号进行编码。</p>
+                <p><strong>记者：</strong>这种技术有什么优势？</p>
+                <p><strong>张明远：</strong>抗干扰能力强，而且信号隐蔽性好。我们的序列长度设计为
+                    <span class="highlight-num">2^n - 1</span>的形式，这是一个经典的取值。</p>
+                <p><strong>记者：</strong>具体是多长呢？</p>
+                <p><strong>张明远：</strong>这个嘛——<span class="redacted" title="鼠标悬停查看">127，也就是2的7次方减1。</span>
+                    这个长度在工业环境下提供了良好的平衡。</p>
+                <p style="color:#8b6b4b; font-size:11px;">📝 注：M序列的数学原理在 <a href="qa.html" class="cross-ref">问答平台</a> 上有详细讨论。</p>
+            </div>
+        </article>
+
+        <!-- 跨平台导航 -->
+        <div style="background:var(--card); border:1px solid var(--border); border-radius:4px; padding:14px 18px; margin-top:16px;">
+            <p style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;font-family:'Microsoft YaHei',sans-serif;">🔗 相关平台</p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <a href="archive.html" style="font-size:10px;color:var(--link);text-decoration:none;padding:4px 10px;background:#f5f0e8;border-radius:3px;font-family:'Microsoft YaHei',sans-serif;">📚 档案馆</a>
+                <a href="map.html" style="font-size:10px;color:var(--link);text-decoration:none;padding:4px 10px;background:#f5f0e8;border-radius:3px;font-family:'Microsoft YaHei',sans-serif;">🗺 设施地图</a>
+                <a href="paper.html" style="font-size:10px;color:var(--link);text-decoration:none;padding:4px 10px;background:#f5f0e8;border-radius:3px;font-family:'Microsoft YaHei',sans-serif;">📑 论文库</a>
+                <a href="qa.html" style="font-size:10px;color:var(--link);text-decoration:none;padding:4px 10px;background:#f5f0e8;border-radius:3px;font-family:'Microsoft YaHei',sans-serif;">❓ 问答平台</a>
+                <a href="weather.html" style="font-size:10px;color:var(--link);text-decoration:none;padding:4px 10px;background:#f5f0e8;border-radius:3px;font-family:'Microsoft YaHei',sans-serif;">🌡 环境监测</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer class="footer">
+        <p>© 1998-2026 地方科技报 数字化存档 | 新闻线索仅供参考</p>
+        <p style="margin-top:4px;">
+            <a href="forum.html">论坛</a> ·
+            <a href="archive.html">档案馆</a> ·
+            <a href="map.html">地图</a> ·
+            <a href="paper.html">论文</a> ·
+            <a href="qa.html">问答</a> ·
+            <a href="weather.html">环境</a>
+        </p>
+    </footer>
+
+    <script>
+        function toggleNews(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('show');
+                if (el.classList.contains('show')) {
+                    showToast('📰 展开文章详情');
+                }
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        // 双击涂黑文字显示内容
+        document.querySelectorAll('.redacted').forEach(el => {
+            el.addEventListener('dblclick', function(e) {
+                e.stopPropagation();
+                const rawText = this.textContent;
+                showToast('🔍 隐藏内容：' + rawText);
+            });
+        });
+
+        console.log('地方科技报新闻存档已加载。');
+        console.log('关键信息：五座通信塔、正五边形布局、ECHO系统、M序列127、张明远工程师');
+        console.log('提示：被涂黑文字可鼠标悬停或双击查看。坐标信息需参考地图平台。');
+    </script>
+</body>
+</html>

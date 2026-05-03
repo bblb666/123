@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工业环境监测站 - 实时数据</title>
+    <style>
+        :root {
+            --bg: #f0f4f8;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --muted: #7f8c8d;
+            --border: #dde1e6;
+            --primary: #2980b9;
+            --accent: #e67e22;
+            --danger: #c0392b;
+            --success: #27ae60;
+            --chart-bg: #fafbfc;
+            --gauge-bg: #ecf0f1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: #1a252f;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .top-bar .logo {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .top-bar .nav-links { display: flex; gap: 4px; flex-wrap: wrap; }
+        .top-bar .nav-links a {
+            color: #bdc3c7; text-decoration: none; font-size: 10px;
+            padding: 4px 8px; border-radius: 3px; transition: all 0.15s; white-space: nowrap;
+        }
+        .top-bar .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+        .container { max-width: 960px; margin: 20px auto; padding: 0 20px; }
+
+        .station-header {
+            background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+            padding: 16px 20px; margin-bottom: 14px; display: flex;
+            justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .station-header .station-name { font-size: 16px; font-weight: 700; }
+        .station-header .station-coords { font-size: 10px; color: var(--muted); }
+        .station-header .status-dot {
+            width: 10px; height: 10px; border-radius: 50%; background: var(--success);
+            animation: pulse-dot 2s infinite; display: inline-block; margin-right: 6px;
+        }
+        @keyframes pulse-dot {
+            0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .data-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+            padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .data-card .label { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+        .data-card .value { font-size: 22px; font-weight: 700; color: #1a1a1a; margin: 4px 0; }
+        .data-card .unit { font-size: 11px; color: var(--muted); }
+        .data-card .sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+        .chart-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+            padding: 16px 20px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .chart-card h4 { font-size: 12px; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
+
+        .bar-chart {
+            display: flex; align-items: flex-end; gap: 6px; height: 120px;
+            padding: 0 4px; border-bottom: 2px solid var(--border);
+        }
+        .bar-chart .bar {
+            flex: 1; background: var(--primary); border-radius: 3px 3px 0 0;
+            transition: all 0.3s; cursor: pointer; position: relative; min-width: 14px;
+        }
+        .bar-chart .bar:hover { background: #1a5276; }
+        .bar-chart .bar.anomaly { background: var(--danger); }
+        .bar-chart .bar-label {
+            text-align: center; font-size: 8px; color: var(--muted); margin-top: 4px;
+        }
+
+        .anomaly-box {
+            background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px;
+            padding: 12px 16px; margin-top: 10px; font-size: 11px;
+        }
+        .anomaly-box strong { color: var(--danger); }
+        .anomaly-box code {
+            background: #fde8e8; padding: 1px 5px; border-radius: 2px;
+            font-family: 'SF Mono','Consolas',monospace; font-size: 10px;
+        }
+
+        .cross-ref { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .cross-ref a {
+            font-size: 9px; color: var(--primary); text-decoration: none;
+            padding: 3px 8px; background: #eaf2f8; border-radius: 3px;
+        }
+        .cross-ref a:hover { background: #d4e6f1; }
+
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; background: #1a252f; color: #fff;
+            padding: 10px 18px; border-radius: 6px; font-size: 11px; opacity: 0;
+            transform: translateY(15px); transition: all 0.3s; z-index: 999; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .footer {
+            text-align: center; padding: 20px; margin-top: 24px; color: var(--muted);
+            font-size: 10px; border-top: 1px solid var(--border);
+        }
+        .footer a { color: var(--muted); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo">🌡 工业环境监测站</div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="map.html">地图</a>
+            <a href="archive.html">档案馆</a>
+            <a href="blog.html">博客</a>
+            <a href="memo.html">备忘录</a>
+            <a href="terminal.html">终端</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 监测站信息 -->
+        <div class="station-header">
+            <div>
+                <div class="station-name"><span class="status-dot"></span>监测站 WS-ECHO-01</div>
+                <div class="station-coords">
+                    📍 位置坐标：<code>30.274°N, 120.159°E</code>（废弃工厂旧址 · 回声计划汇合点）
+                </div>
+            </div>
+            <span style="font-size:10px;color:var(--muted);">🕐 数据更新时间：2026-04-30 14:25</span>
+        </div>
+
+        <!-- 数据卡片 -->
+        <div class="data-grid">
+            <div class="data-card">
+                <div class="label">📊 气压</div>
+                <div class="value">1013.2</div>
+                <div class="unit">hPa</div>
+                <div class="sub">波动周期约127秒</div>
+            </div>
+            <div class="data-card">
+                <div class="label">🌡 温度</div>
+                <div class="value">18.7</div>
+                <div class="unit">°C</div>
+                <div class="sub">日较差 6.3°C</div>
+            </div>
+            <div class="data-card">
+                <div class="label">💧 湿度</div>
+                <div class="value">64</div>
+                <div class="unit">%RH</div>
+                <div class="sub">正常范围</div>
+            </div>
+            <div class="data-card">
+                <div class="label">📡 电磁场</div>
+                <div class="value" style="color:var(--accent);">-45</div>
+                <div class="unit">dBm @1.42GHz</div>
+                <div class="sub">周期性脉冲检测</div>
+            </div>
+        </div>
+
+        <!-- 气压波动图表 -->
+        <div class="chart-card">
+            <h4>📈 气压波动记录（最近10个周期 · 每127秒采样一次）</h4>
+            <div class="bar-chart" id="barChart"></div>
+            <div style="display:flex; gap:6px; font-size:8px; color:var(--muted); margin-top:2px; padding:0 4px;">
+                <span style="flex:1;text-align:center;">T1</span><span style="flex:1;text-align:center;">T2</span>
+                <span style="flex:1;text-align:center;">T3</span><span style="flex:1;text-align:center;">T4</span>
+                <span style="flex:1;text-align:center;">T5</span><span style="flex:1;text-align:center;">T6</span>
+                <span style="flex:1;text-align:center;">T7</span><span style="flex:1;text-align:center;">T8</span>
+                <span style="flex:1;text-align:center;">T9</span><span style="flex:1;text-align:center;">T10</span>
+            </div>
+        </div>
+
+        <!-- 异常报告 -->
+        <div class="chart-card">
+            <h4>⚠ 异常事件记录</h4>
+            <div class="anomaly-box">
+                <strong>2026-04-28 14:32</strong> — 检测到1.42GHz频段电磁脉冲，
+                功率 <code>-45dBm</code>，持续 <code>2.3秒</code>。<br>
+                脉冲间隔：<code>127秒</code>（精确值 <code>2^7-1</code>）。<br>
+                此模式与1998年回声计划通信协议特征一致。<br>
+                监测站位置恰好位于五个通信节点的<span style="color:var(--danger);">汇合中心点</span>。
+            </div>
+            <div class="anomaly-box" style="margin-top:8px;background:#fef9e7;border-color:#f9e79f;">
+                <strong>💡 分析：</strong>本监测站建于废弃工厂旧址。该工厂在1998年曾是回声计划通信网络的
+                <strong>数据处理中心</strong>。环境数据中的127秒周期性波动是通信节点同步信号的
+                <strong>间接证据</strong>。这与地图上标注的汇合点坐标一致。
+            </div>
+        </div>
+
+        <!-- 跨平台 -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;">
+            <p style="font-size:9px;color:var(--muted);margin-bottom:4px;">🔗 关联平台</p>
+            <div class="cross-ref">
+                <a href="map.html">🗺 工业设施地图</a>
+                <a href="archive.html">📚 档案馆</a>
+                <a href="blog.html">📝 博客分析</a>
+                <a href="memo.html">📋 备忘录</a>
+                <a href="terminal.html">🖥 远程终端</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <footer class="footer">
+        <p>© 2026 工业环境监测站 | WS-ECHO-01 | 汇合点数据</p>
+    </footer>
+
+    <script>
+        // 生成气压柱状图
+        function buildChart() {
+            const container = document.getElementById('barChart');
+            const baseValues = [1012.8, 1013.0, 1013.5, 1013.2, 1012.9, 1013.1, 1013.4, 1013.0, 1012.7, 1013.2];
+            const maxVal = 1014;
+            const minVal = 1012;
+            const range = maxVal - minVal;
+
+            baseValues.forEach((val, i) => {
+                const height = ((val - minVal) / range) * 110 + 10;
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                if (i === 2 || i === 6) bar.classList.add('anomaly');
+                bar.style.height = height + 'px';
+                bar.title = `周期T${i+1}: ${val} hPa`;
+                bar.addEventListener('click', () => {
+                    showToast(`📊 周期T${i+1}: 气压 ${val} hPa — 127秒间隔的规律波动`);
+                });
+                container.appendChild(bar);
+            });
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        buildChart();
+
+        console.log('工业环境监测站已加载。');
+        console.log('监测站位于汇合点：30.274°N, 120.159°E（废弃工厂）。');
+        console.log('环境数据证实了127秒周期脉冲的存在，与回声计划通信协议一致。');
+    </script>
+</body>
+</html>

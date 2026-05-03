@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitCode - 开源代码仓库</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --text: #c9d1d9;
+            --muted: #8b949e;
+            --border: #30363d;
+            --primary: #58a6ff;
+            --accent: #f0883e;
+            --success: #3fb950;
+            --danger: #f85149;
+            --code-bg: #0d1117;
+            --line-num: #484f58;
+            --comment: #8b949e;
+            --keyword: #ff7b72;
+            --string: #a5d6ff;
+            --func: #d2a8ff;
+            --number: #79c0ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: #161b22;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .top-bar .logo {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+        .top-bar .logo .icon {
+            color: var(--accent);
+            font-size: 18px;
+        }
+        .top-bar .nav-links {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .top-bar .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .top-bar .nav-links a:hover {
+            color: var(--primary);
+            background: rgba(88, 166, 255, 0.06);
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .repo-header {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px 8px 0 0;
+            padding: 18px 22px;
+            border-bottom: none;
+        }
+        .repo-header .repo-path {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+        }
+        .repo-header .repo-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            margin: 4px 0;
+        }
+        .repo-header .repo-desc {
+            font-size: 11px;
+            color: var(--muted);
+        }
+        .repo-header .repo-meta {
+            display: flex;
+            gap: 14px;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--muted);
+            flex-wrap: wrap;
+        }
+        .repo-header .lang-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f0883e;
+            display: inline-block;
+            margin-right: 3px;
+        }
+
+        .file-nav {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+            font-size: 10px;
+        }
+        .file-nav a {
+            color: var(--primary);
+            text-decoration: none;
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+        .file-nav a:hover {
+            background: rgba(88, 166, 255, 0.08);
+        }
+        .file-nav span {
+            color: var(--muted);
+        }
+
+        .file-list {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+        .file-item {
+            padding: 10px 16px;
+            border-bottom: 1px solid #1a1f26;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 12px;
+        }
+        .file-item:hover {
+            background: #1c2128;
+        }
+        .file-item .file-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .file-item .file-name {
+            color: var(--primary);
+            flex: 1;
+        }
+        .file-item .file-date {
+            color: var(--muted);
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .code-viewer {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 14px;
+        }
+        .code-viewer .code-header {
+            background: #21262d;
+            padding: 8px 14px;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+        }
+        .code-viewer .code-content {
+            padding: 14px 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+        .code-line {
+            display: flex;
+            min-height: 20px;
+        }
+        .code-line .ln {
+            width: 46px;
+            text-align: right;
+            padding-right: 12px;
+            color: var(--line-num);
+            user-select: none;
+            flex-shrink: 0;
+            font-size: 10px;
+        }
+        .code-line .code {
+            white-space: pre;
+            flex: 1;
+            padding-right: 14px;
+        }
+        .code .c {
+            color: var(--comment);
+            font-style: italic;
+        }
+        .code .k {
+            color: var(--keyword);
+        }
+        .code .s {
+            color: var(--string);
+        }
+        .code .f {
+            color: var(--func);
+        }
+        .code .n {
+            color: var(--number);
+        }
+        .code .highlight-line {
+            background: rgba(240, 136, 62, 0.1);
+            display: inline-block;
+            width: 100%;
+        }
+
+        .comment-hint {
+            background: #1a2332;
+            border: 1px solid #2a4560;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 10px;
+            color: var(--primary);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .comment-hint:hover {
+            background: #1e2d40;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #21262d;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo"><span class="icon">⟨⟩</span> GitCode</div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="ftp.html">FTP</a>
+            <a href="manual.html">手册</a>
+            <a href="recruit.html">招聘</a>
+            <a href="doc-share.html">文档</a>
+            <a href="terminal.html">终端</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 仓库头部 -->
+        <div class="repo-header">
+            <div class="repo-path">project_zeta / echo-reverse</div>
+            <div class="repo-name">echo-reverse</div>
+            <div class="repo-desc">回声计划通信系统逆向工程 - FPGA频谱分析仪开源代码</div>
+            <div class="repo-meta">
+                <span><span class="lang-dot"></span> Verilog 68% · Python 22% · C 10%</span>
+                <span>⭐ 47</span>
+                <span>⑂ 12</span>
+                <span>更新于 2026-04-30</span>
+            </div>
+        </div>
+
+        <!-- 文件导航 -->
+        <div class="file-nav">
+            <a href="#">master</a><span>/</span>
+            <a href="#">echo-reverse</a><span>/</span>
+            <span style="color:var(--text);">src</span>
+        </div>
+
+        <!-- 文件列表 -->
+        <div class="file-list">
+            <div class="file-item" onclick="viewFile('top')">
+                <span class="file-icon">📄</span>
+                <span class="file-name">fpga_spectrum_top.v</span>
+                <span class="file-date">28 KB · 2 weeks ago</span>
+            </div>
+            <div class="file-item" onclick="viewFile('iq')">
+                <span class="file-icon">📄</span>
+                <span class="file-name">iq_demodulator.v</span>
+                <span class="file-date">16 KB · 2 weeks ago</span>
+            </div>
+            <div class="file-item" onclick="viewFile('mseq')">
+                <span class="file-icon">📄</span>
+                <span class="file-name">m_sequence_gen.v</span>
+                <span class="file-date">12 KB · 2 weeks ago</span>
+            </div>
+            <div class="file-item" onclick="viewFile('config')">
+                <span class="file-icon">📄</span>
+                <span class="file-name">config.h</span>
+                <span class="file-date">4.5 KB · 2 weeks ago</span>
+            </div>
+            <div class="file-item" onclick="viewFile('utils')">
+                <span class="file-icon">🐍</span>
+                <span class="file-name">decode_iq.py</span>
+                <span class="file-date">8.3 KB · 1 week ago</span>
+            </div>
+            <div class="file-item" onclick="viewFile('readme')">
+                <span class="file-icon">📝</span>
+                <span class="file-name">README.md</span>
+                <span class="file-date">2.1 KB · 3 days ago</span>
+            </div>
+        </div>
+
+        <!-- 代码查看区 -->
+        <div class="code-viewer" id="codeViewer" style="display:none;">
+            <div class="code-header" id="codeHeader">📄 选择文件查看源代码</div>
+            <div class="code-content" id="codeContent"></div>
+        </div>
+
+        <!-- 提示卡片 -->
+        <div class="comment-hint" onclick="showHint()">
+            💡 点击查看代码中的关键注释——解压密码线索
+        </div>
+
+        <!-- 跨平台 -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-top:14px;">
+            <p style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;">🔗 关联资源</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                <a href="ftp.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#1a2332;border-radius:3px;">📁 FTP压缩包</a>
+                <a href="manual.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#1a2332;border-radius:3px;">📖 说明书</a>
+                <a href="recruit.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#1a2332;border-radius:3px;">💼 招聘</a>
+                <a href="terminal.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#1a2332;border-radius:3px;">🖥 终端</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <footer class="footer">
+        <p>© 2026 GitCode | project_zeta/echo-reverse</p>
+    </footer>
+
+    <script>
+        const files = {
+            'readme': {
+                name: 'README.md',
+                content: `
+        <span class="c"># echo-reverse</span>
+        <span class="c"># 回声计划通信系统逆向工程</span>
+
+        <span class="c">## 项目说明</span>
+        本项目旨在逆向分析1998年部署的回声计划扩频通信系统。
+        系统使用BPSK调制，M序列扩频，载波频率1.42GHz。
+
+        <span class="c">## 关键参数</span>
+        - 载波频率：1.42 GHz
+        - 调制方式：BPSK
+        - 扩频序列：M序列，n=7，周期=127
+        - 本原多项式：x^7 + x^3 + 1
+        - 节点数量：5个（正五边形拓扑）
+
+        <span class="c">## FTP压缩包解压密码</span>
+        <span class="c">// 密码在config.h文件中有详细说明</span>
+        <span class="c">// 也可参考参数4950的十进制值</span>`
+            },
+            'config': {
+                name: 'config.h',
+                content: `
+        <span class="c">// ============================================</span>
+        <span class="c">// 回声计划逆向工程 - 配置文件</span>
+        <span class="c">// ============================================</span>
+
+        <span class="k">#define</span> <span class="f">CARRIER_FREQ_HZ</span>    <span class="n">1420000000</span>  <span class="c">// 1.42 GHz</span>
+        <span class="k">#define</span> <span class="f">SAMPLE_RATE_HZ</span>     <span class="n">2000000</span>     <span class="c">// 2 MS/s</span>
+        <span class="k">#define</span> <span class="f">MSEQ_N</span>             <span class="n">7</span>            <span class="c">// LFSR级数</span>
+        <span class="k">#define</span> <span class="f">MSEQ_PERIOD</span>        <span class="n">127</span>          <span class="c">// 2^7 - 1 = 127秒</span>
+        <span class="k">#define</span> <span class="f">POLY_TAPS</span>          <span class="n">0x48</span>         <span class="c">// x^7 + x^3 + 1</span>
+
+        <span class="c">// ============================================</span>
+        <span class="c">// FTP压缩包 (echo_project_archive.zip) 解压密码</span>
+        <span class="c">// 密码 = 参数4950的十进制值</span>
+        <span class="c">// 0x7A34 → 十进制 → </span><span class="n highlight-line">31284</span>
+        <span class="c">// ============================================</span>
+        <span class="k">#define</span> <span class="f">ARCHIVE_PASSWORD</span>   <span class="s">"31284"</span>    <span class="c">// 解压密码</span>
+
+        <span class="c">// 调试模式解锁密钥（十六进制参数4950-4952的ASCII）</span>
+        <span class="c">// 0x7A34 0x4C4F 0x434B → "z4LOCK"</span>
+        <span class="k">#define</span> <span class="f">DEBUG_UNLOCK_KEY</span>   <span class="s">"z4LOCK"</span>  <span class="c">// SSH解锁密钥</span>`
+            },
+            'mseq': {
+                name: 'm_sequence_gen.v',
+                content: `
+        <span class="c">// M序列生成器 - n=7, 周期127</span>
+        <span class="c">// 本原多项式: x^7 + x^3 + 1</span>
+        <span class="k">module</span> <span class="f">m_sequence_gen</span> (
+            <span class="k">input</span>  clk,
+            <span class="k">input</span>  rst_n,
+            <span class="k">output</span> m_seq_out
+        );
+        <span class="k">reg</span> [<span class="n">6</span>:<span class="n">0</span>] lfsr;  <span class="c">// 7位LFSR</span>
+
+        <span class="k">always</span> @(<span class="k">posedge</span> clk <span class="k">or</span> <span class="k">negedge</span> rst_n) <span class="k">begin</span>
+            <span class="k">if</span> (!rst_n)
+                lfsr <= <span class="n">7</span>'b0000001;  <span class="c">// 非零初始状态</span>
+            <span class="k">else</span>
+                lfsr <= {lfsr[<span class="n">5</span>:<span class="n">0</span>], lfsr[<span class="n">6</span>] ^ lfsr[<span class="n">2</span>]};
+                <span class="c">// 反馈: bit6 XOR bit2 (对应x^7 + x^3 + 1)</span>
+        <span class="k">end</span>
+
+        <span class="k">assign</span> m_seq_out = lfsr[<span class="n">6</span>];
+        <span class="k">endmodule</span>`
+            }
+        };
+
+        function viewFile(id) {
+            const file = files[id];
+            if (!file) { showToast('文件加载中...'); return; }
+            document.getElementById('codeViewer').style.display = 'block';
+            document.getElementById('codeHeader').textContent = '📄 ' + file.name;
+            const lines = file.content.trim().split('\n');
+            let html = '';
+            lines.forEach((line, i) => {
+                html += `<div class="code-line"><span class="ln">${i+1}</span><span class="code">${line}</span></div>`;
+            });
+            document.getElementById('codeContent').innerHTML = html;
+            document.getElementById('codeViewer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            if (id === 'config') {
+                showToast('🔑 发现解压密码：31284');
+            }
+        }
+
+        function showHint() {
+            viewFile('config');
+            showToast('💡 config.h 中包含关键密码信息');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        console.log('GitCode仓库已加载。');
+        console.log('关键文件：config.h 包含FTP压缩包解压密码 = 31284');
+        console.log('DEBUG_UNLOCK_KEY = z4LOCK（用于SSH终端登录）');
+    </script>
+</body>
+</html>

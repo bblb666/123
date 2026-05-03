@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>远程维护终端 - SSH Console</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --text: #00cc66;
+            --muted: #006633;
+            --prompt: #00ff88;
+            --cmd: #ffffff;
+            --output: #aaaaaa;
+            --error: #ff4444;
+            --success: #00ff88;
+            --highlight: #ffcc00;
+            --border: #1a1a1a;
+            --cursor: #00ff88;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Consolas', 'Courier New', 'Noto Sans SC', monospace;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .terminal-container {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-output {
+            flex: 1;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .terminal-output .line {
+            animation: fadeIn 0.15s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .terminal-output .dim {
+            color: var(--muted);
+        }
+        .terminal-output .prompt {
+            color: var(--prompt);
+        }
+        .terminal-output .cmd {
+            color: var(--cmd);
+        }
+        .terminal-output .out {
+            color: var(--output);
+        }
+        .terminal-output .err {
+            color: var(--error);
+        }
+        .terminal-output .ok {
+            color: var(--success);
+        }
+        .terminal-output .hl {
+            color: var(--highlight);
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            border-top: 1px solid #111;
+            margin-top: 8px;
+        }
+        .input-line .prompt-text {
+            color: var(--prompt);
+            font-size: 12px;
+            white-space: nowrap;
+            margin-right: 6px;
+        }
+        .input-line input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--cmd);
+            font-family: inherit;
+            font-size: 12px;
+            outline: none;
+            caret-color: var(--cursor);
+        }
+        .input-line input::placeholder {
+            color: #003322;
+        }
+        .input-line .cursor {
+            color: var(--cursor);
+            animation: blink 1s step-end infinite;
+            font-size: 12px;
+        }
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .top-bar {
+            background: #111;
+            border-bottom: 1px solid #222;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #555;
+            flex-shrink: 0;
+        }
+        .top-bar .nav-links {
+            display: flex;
+            gap: 4px;
+        }
+        .top-bar .nav-links a {
+            color: #444;
+            text-decoration: none;
+            font-size: 9px;
+            padding: 2px 6px;
+            transition: color 0.2s;
+        }
+        .top-bar .nav-links a:hover {
+            color: var(--text);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #111;
+            border: 1px solid var(--text);
+            color: var(--text);
+            padding: 8px 14px;
+            font-size: 10px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <span>ssh guest@echo-net.work — 远程维护终端</span>
+        <div class="nav-links">
+            <a href="forum.html">论坛</a>
+            <a href="mailbox.html">邮箱</a>
+            <a href="ftp.html">FTP</a>
+            <a href="git.html">代码</a>
+            <a href="manual.html">手册</a>
+            <a href="memo.html">备忘</a>
+        </div>
+    </div>
+
+    <div class="terminal-container" id="terminalContainer">
+        <div class="terminal-output" id="terminalOutput">
+            <div class="line dim">Last login: Wed Apr 30 14:22:38 2026 from 192.168.1.100</div>
+            <div class="line dim">──────────────────────────────────────────────</div>
+            <div class="line ok">Connected to echo-net.work maintenance terminal.</div>
+            <div class="line dim">System: Echo Project Maintenance Shell v1.0 (1998)</div>
+            <div class="line dim">──────────────────────────────────────────────</div>
+            <div class="line out">Type <span class="hl">help</span> for available commands.</div>
+            <div class="line out">Authentication required for full access.</div>
+            <div class="line"></div>
+        </div>
+
+        <div class="input-line">
+            <span class="prompt-text" id="promptText">guest@echo:~$</span>
+            <input type="text" id="terminalInput" placeholder="输入命令..." autofocus
+            onkeydown="if(event.key==='Enter')executeCommand()">
+            <span class="cursor">█</span>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const output = document.getElementById('terminalOutput');
+        const input = document.getElementById('terminalInput');
+        const promptText = document.getElementById('promptText');
+
+        let authenticated = false;
+        let loginStage = 0;
+        let passwordAttempts = 0;
+        const correctPassword = 'z4LOCK';
+        let commandHistory = [];
+
+        const helpText = `
+        <span class="dim">Available commands:</span>
+          <span class="hl">help</span>      - Show this help message
+          <span class="hl">login</span>     - Authenticate to the system
+          <span class="hl">status</span>    - Show system status
+          <span class="hl">nodes</span>     - List communication nodes
+          <span class="hl">network</span>   - Show network topology
+          <span class="hl">verify</span>    - Verify parameter integrity
+          <span class="hl">access</span>    - Request full access (requires code)
+          <span class="hl">clear</span>     - Clear the terminal
+          <span class="hl">logout</span>    - End session`;
+
+        function appendOutput(text) {
+            output.innerHTML += `<div class="line">${text}</div>`;
+            output.parentElement.scrollTop = output.parentElement.scrollHeight;
+        }
+
+        function executeCommand() {
+            const cmd = input.value.trim().toLowerCase();
+            input.value = '';
+            if (!cmd) return;
+
+            commandHistory.push(cmd);
+            appendOutput(`<span class="prompt">${promptText.textContent}</span> <span class="cmd">${cmd}</span>`);
+
+            switch (cmd) {
+                case 'help':
+                    appendOutput(helpText);
+                    break;
+
+                case 'clear':
+                    output.innerHTML = '';
+                    break;
+
+                case 'status':
+                    appendOutput(`<span class="out">System Status: STANDBY</span>`);
+                    appendOutput(`<span class="out">Uptime: 27 years, 4 months, 12 days</span>`);
+                    appendOutput(`<span class="out">Carrier: 1.42 GHz</span>`);
+                    appendOutput(`<span class="out">Modulation: BPSK + M-sequence (n=7, period=127s)</span>`);
+                    appendOutput(`<span class="out">Nodes online: 5/5</span>`);
+                    appendOutput(`<span class="out">Link status: ACTIVE (~Link_broken~ negated)</span>`);
+                    if (!authenticated) {
+                        appendOutput(`<span class="err">Full details require authentication. Type 'login'.</span>`);
+                    }
+                    break;
+
+                case 'nodes':
+                    appendOutput(`<span class="out">ECHO-NODE-01: 30.2741°N, 120.1551°E — ONLINE</span>`);
+                    appendOutput(`<span class="out">ECHO-NODE-02: 30.2812°N, 120.1623°E — ONLINE</span>`);
+                    appendOutput(`<span class="out">ECHO-NODE-03: 30.2698°N, 120.1698°E — ONLINE</span>`);
+                    appendOutput(`<span class="out">ECHO-NODE-04: 30.2623°N, 120.1612°E — ONLINE</span>`);
+                    appendOutput(`<span class="out">ECHO-NODE-05: 30.2655°N, 120.1489°E — ONLINE</span>`);
+                    appendOutput(`<span class="hl">Topology: Regular pentagon. Center: ~30.274°N, 120.159°E</span>`);
+                    break;
+
+                case 'network':
+                    appendOutput(`<span class="out">Network: ECHO Distributed Communication System</span>`);
+                    appendOutput(`<span class="out">Topology: 5-node regular pentagon mesh</span>`);
+                    appendOutput(`<span class="out">Carrier: 1.42 GHz (hydrogen line)</span>`);
+                    appendOutput(`<span class="out">Spreading: M-sequence, LFSR n=7, polynomial x^7+x^3+1</span>`);
+                    appendOutput(`<span class="out">Period: 127 seconds (2^7-1)</span>`);
+                    appendOutput(`<span class="out">Center hub: Abandoned factory at pentagon centroid</span>`);
+                    break;
+
+                case 'verify':
+                    appendOutput(`<span class="out">Parameter 4950: 0x7A34 → decimal </span><span class="hl">31284</span>`);
+                    appendOutput(`<span class="out">Parameter 4951: 0x4C4F</span>`);
+                    appendOutput(`<span class="out">Parameter 4952: 0x434B</span>`);
+                    appendOutput(`<span class="out">ASCII concatenation: </span><span class="hl">z4LOCK</span>`);
+                    appendOutput(`<span class="out">Checksum: OK</span>`);
+                    break;
+
+                case 'login':
+                    if (authenticated) {
+                        appendOutput(`<span class="ok">Already authenticated as guest.</span>`);
+                    } else {
+                        loginStage = 1;
+                        appendOutput(`<span class="hl">Enter unlock key (ASCII from params 4950-4952):</span>`);
+                        promptText.textContent = 'unlock> ';
+                    }
+                    break;
+
+                case 'logout':
+                    authenticated = false;
+                    loginStage = 0;
+                    passwordAttempts = 0;
+                    promptText.textContent = 'guest@echo:~$';
+                    appendOutput(`<span class="out">Session ended. Goodbye.</span>`);
+                    break;
+
+                case 'access':
+                    if (!authenticated) {
+                        appendOutput(`<span class="err">Authentication required. Type 'login' first.</span>`);
+                    } else {
+                        appendOutput(`<span class="hl">Enter verification code (param4950 decimal value):</span>`);
+                        loginStage = 2;
+                        promptText.textContent = 'verify> ';
+                    }
+                    break;
+
+                default:
+                    // 处理登录流程
+                    if (loginStage === 1) {
+                        if (cmd === correctPassword.toLowerCase()) {
+                            authenticated = true;
+                            loginStage = 0;
+                            passwordAttempts = 0;
+                            promptText.textContent = 'guest@echo:~$';
+                            appendOutput(`<span class="ok">✅ Authentication successful. Welcome, operator.</span>`);
+                            appendOutput(`<span class="ok">Full system access granted.</span>`);
+                            appendOutput(`<span class="out">Type 'access' for advanced verification.</span>`);
+                            showToast('🔓 终端已解锁！密码：z4LOCK');
+                        } else {
+                            passwordAttempts++;
+                            if (passwordAttempts >= 3) {
+                                loginStage = 0;
+                                passwordAttempts = 0;
+                                promptText.textContent = 'guest@echo:~$';
+                                appendOutput(`<span class="err">Too many attempts. Access locked for 60 seconds.</span>`);
+                            } else {
+                                appendOutput(`<span class="err">Invalid key. ${3-passwordAttempts} attempts remaining.</span>`);
+                                appendOutput(`<span class="dim">Hint: Convert hex params 4950-4952 to ASCII.</span>`);
+                            }
+                        }
+                    } else if (loginStage === 2) {
+                        if (cmd === '31284') {
+                            loginStage = 0;
+                            promptText.textContent = 'guest@echo:~$';
+                            appendOutput(`<span class="ok">═══════════════════════════════════════</span>`);
+                            appendOutput(`<span class="ok">✅ FULL SYSTEM ACCESS GRANTED</span>`);
+                            appendOutput(`<span class="ok">═══════════════════════════════════════</span>`);
+                            appendOutput(`<span class="hl">ECHO PROJECT — System Restoration Complete</span>`);
+                            appendOutput(`<span class="out">All 5 nodes synchronized.</span>`);
+                            appendOutput(`<span class="out">Carrier: 1.42 GHz | Period: 127s | Modulation: BPSK+M-seq</span>`);
+                            appendOutput(`<span class="out">Network topology: Regular pentagon, center at factory.</span>`);
+                            appendOutput(`<span class="out">The ECHO network is alive. It was never truly disconnected.</span>`);
+                            appendOutput(`<span class="dim">~Link_broken~ → Link_active</span>`);
+                            appendOutput(`<span class="hl">Thank you for completing the puzzle.</span>`);
+                            showToast('🎉 回声计划解密完成！所有线索已汇聚。');
+                        } else {
+                            appendOutput(`<span class="err">Invalid code. Hint: 0x7A34 in decimal.</span>`);
+                        }
+                    } else {
+                        appendOutput(`<span class="err">Command not found: ${cmd}. Type 'help' for available commands.</span>`);
+                    }
+                    break;
+            }
+
+            input.focus();
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // 自动聚焦输入框
+        document.addEventListener('click', () => input.focus());
+        input.focus();
+
+        // 初始提示
+        setTimeout(() => {
+            appendOutput(`<span class="dim">Hint: Type 'help' to begin. Authentication required for full access.</span>`);
+            appendOutput(`<span class="dim">Login credentials are scattered across the network.</span>`);
+        }, 500);
+
+        console.log('远程维护终端已加载。');
+        console.log('登录密码：z4LOCK（来自参数4950-4952的ASCII解码）');
+        console.log('验证码：31284（0x7A34的十进制值）');
+        console.log('这是ARG的最终汇聚点，玩家需输入正确的凭据完成解密。');
+    </script>
+</body>
+</html>

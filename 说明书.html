@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设备说明书库 - 产品手册查询</title>
+    <style>
+        :root {
+            --bg: #fafbfc;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --muted: #7f8c8d;
+            --border: #dde1e6;
+            --primary: #2980b9;
+            --accent: #c0392b;
+            --warning-bg: #fef9e7;
+            --warning-border: #f9e79f;
+            --code-bg: #f4f6f8;
+            --highlight: #e8f4fd;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: #1a252f;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        .top-bar .logo {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .top-bar .nav-links {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .top-bar .nav-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .top-bar .nav-links a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .search-bar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+        .search-bar input {
+            flex: 1;
+            min-width: 180px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .search-bar select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: inherit;
+            background: #fff;
+            cursor: pointer;
+        }
+        .search-bar button {
+            padding: 8px 18px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+        .search-bar button:hover {
+            background: #1f6da0;
+        }
+
+        .manual-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            border-left: 3px solid transparent;
+        }
+        .manual-card:hover {
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+            border-left-color: var(--primary);
+        }
+        .manual-card .model {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+        .manual-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 4px 0;
+        }
+        .manual-card .meta {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .manual-detail {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        .manual-detail.show {
+            display: block;
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 11px;
+        }
+        .param-table th {
+            background: #f4f6f8;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+        .param-table td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #f0f2f4;
+        }
+        .param-table code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 10px;
+        }
+
+        .highlight-box {
+            background: var(--highlight);
+            border: 1px solid #bdd8f0;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 11px;
+            color: #1a5276;
+        }
+
+        .warning-box {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 11px;
+            color: #7d6608;
+        }
+
+        .dip-switch {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+            margin: 8px 0;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+        }
+        .dip-switch .switch {
+            width: 20px;
+            height: 32px;
+            border: 2px solid #555;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #333;
+            color: #fff;
+            font-size: 9px;
+            font-weight: bold;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .dip-switch .switch.on {
+            background: #27ae60;
+            border-color: #1e8449;
+        }
+        .dip-switch .switch-label {
+            font-size: 8px;
+            color: var(--muted);
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .cross-ref-link {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--primary);
+            text-decoration: none;
+            padding: 3px 9px;
+            background: #eaf2f8;
+            border-radius: 3px;
+            transition: background 0.15s;
+        }
+        .cross-ref-link:hover {
+            background: #d4e6f1;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1a252f;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .manual-card {
+                padding: 14px 12px;
+            }
+            .param-table {
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo">📖 设备说明书库</div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="archive.html">档案馆</a>
+            <a href="doc-share.html">文档</a>
+            <a href="shop.html">二手交易</a>
+            <a href="git.html">代码仓库</a>
+            <a href="ftp.html">FTP</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="搜索设备型号，如 SX-720...">
+            <select id="brandSelect">
+                <option value="">全部品牌</option>
+                <option>FANUC</option>
+                <option>SIEMENS</option>
+                <option>星辰通信</option>
+                <option>SX系列</option>
+            </select>
+            <button onclick="searchManual()">🔍 查询</button>
+        </div>
+
+        <div id="resultsArea">
+
+            <!-- 手册1：SX-720标准版 -->
+            <div class="manual-card" onclick="toggleManual('manual1')">
+                <div class="model">型号：SX-720</div>
+                <h3>SX-720型变频器标准说明书（1998版）</h3>
+                <div class="meta">厂商：星辰通信技术有限公司 | 版本：v2.3 | 页数：186</div>
+                <div class="manual-detail" id="manual1">
+                    <p><strong>第7章：DIP开关配置</strong></p>
+                    <p>SX-720型变频器配备8位DIP开关，位于设备侧面维护面板内。</p>
+                    <div class="dip-switch">
+                        <span style="margin-right:8px;">SW1:</span>
+                        <span class="switch on">1</span>
+                        <span class="switch">0</span>
+                        <span class="switch">0</span>
+                        <span class="switch on">1</span>
+                        <span class="switch on">1</span>
+                        <span class="switch">0</span>
+                        <span class="switch on">1</span>
+                        <span class="switch">0</span>
+                        <span style="margin-left:8px;font-size:10px;">← 出厂默认</span>
+                    </div>
+                    <p style="font-size:10px;color:var(--muted);">上图仅展示出厂默认配置。实际DIP开关位置以设备实物为准。</p>
+                    <table class="param-table">
+                        <tr><th>开关位</th><th>功能</th><th>ON(1)</th><th>OFF(0)</th></tr>
+                        <tr><td>SW1-1</td><td>运行模式</td><td>调试模式</td><td>正常模式</td></tr>
+                        <tr><td>SW1-2</td><td>频率范围</td><td>扩展</td><td>标准</td></tr>
+                        <tr><td>SW1-3</td><td>预留</td><td>-</td><td>-</td></tr>
+                        <tr><td>SW1-4</td><td>载波使能</td><td>启用</td><td>禁用</td></tr>
+                        <tr><td>SW1-5</td><td>扩频模式</td><td>启用</td><td>禁用</td></tr>
+                        <tr><td>SW1-6</td><td>预留</td><td>-</td><td>-</td></tr>
+                        <tr><td>SW1-7</td><td>外部触发</td><td>启用</td><td>禁用</td></tr>
+                        <tr><td>SW1-8</td><td>终端匹配</td><td>启用</td><td>禁用</td></tr>
+                    </table>
+                    <div class="highlight-box">
+                        💡 当SW1-5（扩频模式）设为ON，且SW1-1（调试模式）设为ON时，
+                        设备将启用隐藏的<strong>扩频载波输出</strong>功能。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 手册2：SX-720/ECHO定制版附录 -->
+            <div class="manual-card" onclick="toggleManual('manual2')">
+                <div class="model">型号：SX-720/ECHO</div>
+                <h3>SX-720/ECHO 定制版附录（仅限内部使用）</h3>
+                <div class="meta">厂商：星辰通信技术有限公司 | 版本：v1.0-internal | 页数：24</div>
+                <div class="manual-detail" id="manual2">
+                    <div class="warning-box">
+                        ⚠ <strong>注意：</strong>此附录为内部文档，未公开发行。
+                        仅提供给回声计划相关技术人员使用。
+                    </div>
+                    <p><strong>附录A：扩展参数表</strong></p>
+                    <table class="param-table">
+                        <tr><th>参数编号</th><th>名称</th><th>默认值</th><th>说明</th></tr>
+                        <tr>
+                            <td><code>4950</code></td>
+                            <td>调试密钥高字节</td>
+                            <td><code>0x7A34</code></td>
+                            <td>与4951、4952组合使用</td>
+                        </tr>
+                        <tr>
+                            <td><code>4951</code></td>
+                            <td>调试密钥中字节</td>
+                            <td><code>0x4C4F</code></td>
+                            <td>与4950、4952组合使用</td>
+                        </tr>
+                        <tr>
+                            <td><code>4952</code></td>
+                            <td>调试密钥低字节</td>
+                            <td><code>0x434B</code></td>
+                            <td>与4950、4951组合使用</td>
+                        </tr>
+                        <tr>
+                            <td><code>4953</code></td>
+                            <td>载波频率微调</td>
+                            <td><code>0x0000</code></td>
+                            <td>单位：kHz，相对1.42GHz的偏移</td>
+                        </tr>
+                        <tr>
+                            <td><code>4954</code></td>
+                            <td>M序列长度选择</td>
+                            <td><code>0x0007</code></td>
+                            <td>n值，序列长度=2^n-1</td>
+                        </tr>
+                    </table>
+                    <p style="margin-top:8px;"><strong>附录B：调试模式进入方法</strong></p>
+                    <p>1. 将DIP开关SW1-1设为ON（调试模式）</p>
+                    <p>2. 在系统启动时通过串口发送参数4950-4952的ASCII字符串作为解锁密钥</p>
+                    <p>3. 若密钥正确，系统进入调试模式，可访问全部扩展参数</p>
+                    <div class="highlight-box">
+                        🔑 参数4950-4952的十六进制值转换为ASCII后为解锁密钥。
+                        转换方法：每两个十六进制字符对应一个ASCII字符。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 手册3：FANUC参数附录 -->
+            <div class="manual-card" onclick="toggleManual('manual3')">
+                <div class="model">型号：FANUC 16i</div>
+                <h3>FANUC 16i 第三方扩展参数附录</h3>
+                <div class="meta">整理：retro_engineer | 来源：档案馆 DOC-1998-0451</div>
+                <div class="manual-detail" id="manual3">
+                    <p><strong>非官方参数记录（参数区域4950-4970）</strong></p>
+                    <table class="param-table">
+                        <tr><th>参数号</th><th>记录值</th><th>推测用途</th></tr>
+                        <tr>
+                            <td>4950</td>
+                            <td><code>0x7A34</code></td>
+                            <td>ASCII字符 'z4'</td>
+                        </tr>
+                        <tr>
+                            <td>4951</td>
+                            <td><code>0x4C4F</code></td>
+                            <td>ASCII字符 'LO'</td>
+                        </tr>
+                        <tr>
+                            <td>4952</td>
+                            <td><code>0x434B</code></td>
+                            <td>ASCII字符 'CK'</td>
+                        </tr>
+                    </table>
+                    <p style="margin-top:6px;">三个参数值组合的ASCII字符串：<code style="background:#f4f6f8;padding:2px 6px;">z4LOCK</code></p>
+                    <p style="font-size:10px;color:var(--muted);">此字符串可能用于解锁系统的隐藏调试功能。</p>
+                    <div class="highlight-box">
+                        📝 此附录根据档案馆纸质文献整理。原始文献编号：
+                        <a href="archive.html" class="cross-ref-link">DOC-1998-0451</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 手册4：通信协议附录 -->
+            <div class="manual-card" onclick="toggleManual('manual4')">
+                <div class="model">型号：ECHO-PROTO v1.0</div>
+                <h3>回声计划通信协议附录（内部草案）</h3>
+                <div class="meta">版本：Draft 3 | 日期：1998-09 | 等级：内部</div>
+                <div class="manual-detail" id="manual4">
+                    <div class="warning-box">
+                        ⚠ 此文档为草案版本，部分参数可能与最终部署版本存在差异。
+                    </div>
+                    <table class="param-table">
+                        <tr><th>协议参数</th><th>设定值</th><th>说明</th></tr>
+                        <tr><td>载波频率</td><td>1.42 GHz</td><td>氢原子谱线</td></tr>
+                        <tr><td>调制方式</td><td>BPSK</td><td>二进制相移键控</td></tr>
+                        <tr><td>扩频序列类型</td><td>M序列</td><td>由LFSR生成</td></tr>
+                        <tr><td>序列长度</td><td>127</td><td>n=7, 2^7-1</td></tr>
+                        <tr><td>本原多项式</td><td>x^7 + x^3 + 1</td><td>反馈抽头位置</td></tr>
+                        <tr><td>节点数量</td><td>5</td><td>正五边形拓扑</td></tr>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 跨平台导航 -->
+        <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 18px; margin-top:16px;">
+            <p style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;">🔗 关联资源</p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <a href="archive.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">📚 档案馆</a>
+                <a href="shop.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">🛒 设备铭牌</a>
+                <a href="git.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">💻 代码仓库</a>
+                <a href="ftp.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">📁 FTP</a>
+                <a href="terminal.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">🖥 终端</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer class="footer">
+        <p>© 2026 设备说明书库 | 技术文档存档</p>
+        <p style="margin-top:4px;">
+            <a href="archive.html">档案馆</a> ·
+            <a href="shop.html">二手交易</a> ·
+            <a href="git.html">代码</a> ·
+            <a href="ftp.html">FTP</a> ·
+            <a href="terminal.html">终端</a>
+        </p>
+    </footer>
+
+    <script>
+        function toggleManual(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('show');
+                if (el.classList.contains('show')) {
+                    if (id === 'manual2') {
+                        showToast('🔑 参数4950-4952的ASCII字符串 = z4LOCK');
+                    } else if (id === 'manual3') {
+                        showToast('📝 三个参数值组合：z4LOCK');
+                    }
+                }
+            }
+        }
+
+        function searchManual() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (query.includes('sx-720') || query.includes('echo')) {
+                document.getElementById('manual2').classList.add('show');
+                document.getElementById('manual2').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showToast('🔍 找到 SX-720/ECHO 定制版附录');
+            } else if (query.includes('fanuc') || query.includes('16i')) {
+                document.getElementById('manual3').classList.add('show');
+                document.getElementById('manual3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showToast('🔍 找到 FANUC 16i 扩展参数附录');
+            } else if (query.includes('协议') || query.includes('proto')) {
+                document.getElementById('manual4').classList.add('show');
+                document.getElementById('manual4').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showToast('🔍 找到回声计划通信协议草案');
+            } else {
+                showToast('🔍 搜索完成。试试搜索 SX-720 或 FANUC');
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        document.getElementById('searchInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchManual();
+        });
+
+        console.log('设备说明书库已加载。');
+        console.log('关键信息：SX-720/ECHO定制版附录中参数4950-4952 = z4LOCK');
+        console.log('DIP开关SW1-5（扩频模式）+ SW1-1（调试模式）= 启用扩频载波输出');
+    </script>
+</body>
+</html>

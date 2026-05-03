@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工业设施地理信息平台</title>
+    <style>
+        :root {
+            --bg: #e8ecf1;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --muted: #7f8c8d;
+            --border: #d5dbe3;
+            --primary: #2980b9;
+            --accent: #e67e22;
+            --danger: #c0392b;
+            --marker-color: #e74c3c;
+            --node-color: #2980b9;
+            --center-color: #f39c12;
+            --map-bg: #d4dcd7;
+            --water: #a8c8e0;
+            --road: #f5f0e0;
+            --building: #d0c8b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: #1a252f;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .top-bar .logo {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-bar .nav-links {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .top-bar .nav-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .top-bar .nav-links a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .map-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 16px;
+        }
+
+        .map-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .map-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #fafbfc;
+        }
+        .map-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .map-controls {
+            display: flex;
+            gap: 4px;
+        }
+        .map-controls button {
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .map-controls button:hover {
+            background: #f0f4f8;
+        }
+        .map-controls button.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .map-area {
+            background: var(--map-bg);
+            height: 520px;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .map-area:active {
+            cursor: grabbing;
+        }
+
+        .map-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 30% 40%, var(--water) 0%, transparent 25%),
+                radial-gradient(circle at 70% 55%, var(--water) 0%, transparent 20%),
+                linear-gradient(var(--road) 0%, var(--road) 100%);
+            opacity: 0.6;
+        }
+
+        .map-grid-line-h {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.06);
+        }
+        .map-grid-line-v {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        .map-marker {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        .map-marker:hover {
+            transform: translate(-50%, -50%) scale(1.4);
+            z-index: 20;
+        }
+        .map-marker.node {
+            background: var(--node-color);
+        }
+        .map-marker.center-marker {
+            background: var(--center-color);
+            width: 20px;
+            height: 20px;
+            animation: pulse-marker 2s infinite;
+        }
+
+        @keyframes pulse-marker {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 14px rgba(243, 156, 18, 0);
+            }
+        }
+
+        .marker-label {
+            position: absolute;
+            font-size: 9px;
+            font-weight: 700;
+            color: #1a252f;
+            white-space: nowrap;
+            transform: translate(-50%, -24px);
+            pointer-events: none;
+            text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+            z-index: 11;
+        }
+
+        .pentagon-line {
+            position: absolute;
+            height: 2px;
+            background: rgba(41, 128, 185, 0.5);
+            transform-origin: left center;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .center-cross {
+            position: absolute;
+            pointer-events: none;
+            z-index: 6;
+        }
+        .center-cross::before,
+        .center-cross::after {
+            content: '';
+            position: absolute;
+            background: rgba(243, 156, 18, 0.4);
+        }
+        .center-cross::before {
+            width: 2px;
+            height: 20px;
+            left: -1px;
+            top: -10px;
+        }
+        .center-cross::after {
+            width: 20px;
+            height: 2px;
+            left: -10px;
+            top: -1px;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: #1a252f;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+            pointer-events: none;
+            z-index: 30;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        .sidebar-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            height: fit-content;
+        }
+
+        .sidebar-panel h4 {
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .node-list-item {
+            padding: 10px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+        .node-list-item:hover {
+            background: #f0f4f8;
+            border-color: var(--border);
+        }
+        .node-list-item .node-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+        .node-list-item .coords {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+
+        .info-box {
+            margin-top: 14px;
+            padding: 12px;
+            background: #fef9e7;
+            border: 1px solid #f9e79f;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #7d6608;
+            line-height: 1.6;
+        }
+        .info-box code {
+            background: #f0e8c0;
+            padding: 1px 5px;
+            border-radius: 2px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 10px;
+        }
+
+        .cross-ref-section {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .cross-ref-link {
+            font-size: 10px;
+            color: var(--primary);
+            text-decoration: none;
+            padding: 4px 10px;
+            background: #eaf2f8;
+            border-radius: 3px;
+            transition: background 0.15s;
+        }
+        .cross-ref-link:hover {
+            background: #d4e6f1;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1a252f;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 800px) {
+            .map-layout {
+                grid-template-columns: 1fr;
+            }
+            .map-area {
+                height: 380px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo">🗺 工业设施地理信息平台</div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="archive.html">档案馆</a>
+            <a href="news.html">新闻</a>
+            <a href="weather.html">环境监测</a>
+            <a href="blog.html">博客</a>
+            <a href="mailbox.html">邮箱</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="map-layout">
+            <!-- 地图面板 -->
+            <div class="map-panel">
+                <div class="map-header">
+                    <h3>📍 回声计划通信节点分布图</h3>
+                    <div class="map-controls">
+                        <button onclick="showAllNodes()" class="active">全部节点</button>
+                        <button onclick="showPentagon()">五边形连线</button>
+                        <button onclick="showCenter()">显示中心</button>
+                    </div>
+                </div>
+                <div class="map-area" id="mapArea">
+                    <div class="map-bg"></div>
+
+                    <!-- 五边形连线层 -->
+                    <div id="pentagonLayer"></div>
+
+                    <!-- 中心十字 -->
+                    <div class="center-cross" id="centerCross"
+                    style="left:50%; top:50%; display:none;"></div>
+
+                    <!-- 节点标记 -->
+                    <div class="map-marker node" id="node1"
+                    style="left:28%; top:32%;"
+                    onmouseenter="showTooltip(event, 'ECHO-NODE-01<br>30.2741°N, 120.1551°E')"
+                    onmouseleave="hideTooltip()"
+                    onclick="focusNode(1)"></div>
+                    <div class="marker-label" style="left:28%; top:32%;">N01</div>
+
+                    <div class="map-marker node" id="node2"
+                    style="left:50%; top:20%;"
+                    onmouseenter="showTooltip(event, 'ECHO-NODE-02<br>30.2812°N, 120.1623°E')"
+                    onmouseleave="hideTooltip()"
+                    onclick="focusNode(2)"></div>
+                    <div class="marker-label" style="left:50%; top:20%;">N02</div>
+
+                    <div class="map-marker node" id="node3"
+                    style="left:68%; top:34%;"
+                    onmouseenter="showTooltip(event, 'ECHO-NODE-03<br>30.2698°N, 120.1698°E')"
+                    onmouseleave="hideTooltip()"
+                    onclick="focusNode(3)"></div>
+                    <div class="marker-label" style="left:68%; top:34%;">N03</div>
+
+                    <div class="map-marker node" id="node4"
+                    style="left:58%; top:62%;"
+                    onmouseenter="showTooltip(event, 'ECHO-NODE-04<br>30.2623°N, 120.1612°E')"
+                    onmouseleave="hideTooltip()"
+                    onclick="focusNode(4)"></div>
+                    <div class="marker-label" style="left:58%; top:62%;">N04</div>
+
+                    <div class="map-marker node" id="node5"
+                    style="left:28%; top:58%;"
+                    onmouseenter="showTooltip(event, 'ECHO-NODE-05<br>30.2655°N, 120.1489°E')"
+                    onmouseleave="hideTooltip()"
+                    onclick="focusNode(5)"></div>
+                    <div class="marker-label" style="left:28%; top:58%;">N05</div>
+
+                    <!-- 中心标记 -->
+                    <div class="map-marker center-marker" id="centerMarker"
+                    style="left:46%; top:41%; display:none;"
+                    onmouseenter="showTooltip(event, '汇合点（计算值）<br>约30.274°N, 120.159°E<br>废弃工厂遗址')"
+                    onmouseleave="hideTooltip()"></div>
+                    <div class="marker-label" id="centerLabel"
+                    style="left:46%; top:41%; display:none; color:#f39c12;">中心</div>
+
+                    <!-- 提示浮层 -->
+                    <div class="tooltip" id="tooltip"></div>
+                </div>
+            </div>
+
+            <!-- 侧边栏 -->
+            <div class="sidebar-panel">
+                <h4>📋 节点坐标清单</h4>
+                <div class="node-list-item" onclick="focusNode(1)">
+                    <span style="display:flex;align-items:center;">
+                        <span class="node-dot" style="background:var(--node-color);"></span>
+                        NODE-01
+                    </span>
+                    <span class="coords">30.2741°N, 120.1551°E</span>
+                </div>
+                <div class="node-list-item" onclick="focusNode(2)">
+                    <span style="display:flex;align-items:center;">
+                        <span class="node-dot" style="background:var(--node-color);"></span>
+                        NODE-02
+                    </span>
+                    <span class="coords">30.2812°N, 120.1623°E</span>
+                </div>
+                <div class="node-list-item" onclick="focusNode(3)">
+                    <span style="display:flex;align-items:center;">
+                        <span class="node-dot" style="background:var(--node-color);"></span>
+                        NODE-03
+                    </span>
+                    <span class="coords">30.2698°N, 120.1698°E</span>
+                </div>
+                <div class="node-list-item" onclick="focusNode(4)">
+                    <span style="display:flex;align-items:center;">
+                        <span class="node-dot" style="background:var(--node-color);"></span>
+                        NODE-04
+                    </span>
+                    <span class="coords">30.2623°N, 120.1612°E</span>
+                </div>
+                <div class="node-list-item" onclick="focusNode(5)">
+                    <span style="display:flex;align-items:center;">
+                        <span class="node-dot" style="background:var(--node-color);"></span>
+                        NODE-05
+                    </span>
+                    <span class="coords">30.2655°N, 120.1489°E</span>
+                </div>
+
+                <div class="info-box">
+                    <strong>💡 分析提示：</strong><br>
+                    五个节点在地图上呈<strong>正五边形</strong>排列。<br>
+                    五边形外接圆的圆心即为<strong>汇合点</strong>。<br>
+                    汇合点坐标需<strong>自行计算</strong>。<br>
+                    点击"显示中心"按钮可查看计算结果。<br>
+                    该位置对应的环境数据见
+                    <a href="weather.html" style="color:#7d6608;">环境监测站</a>。
+                </div>
+
+                <div class="cross-ref-section">
+                    <a href="archive.html" class="cross-ref-link">📚 档案馆坐标文献</a>
+                    <a href="news.html" class="cross-ref-link">📰 旧闻报道</a>
+                    <a href="weather.html" class="cross-ref-link">🌡 环境数据</a>
+                    <a href="mailbox.html" class="cross-ref-link">📬 邮件坐标</a>
+                    <a href="blog.html" class="cross-ref-link">📝 博客分析</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer class="footer">
+        <p>© 2026 工业设施地理信息平台 | 坐标数据仅供参考</p>
+        <p style="margin-top:4px;">
+            <a href="archive.html">档案馆</a> ·
+            <a href="news.html">新闻</a> ·
+            <a href="weather.html">环境</a> ·
+            <a href="mailbox.html">邮箱</a> ·
+            <a href="blog.html">博客</a>
+        </p>
+    </footer>
+
+    <script>
+        let pentagonVisible = false;
+        let centerVisible = false;
+
+        function showAllNodes() {
+            document.querySelectorAll('.map-marker.node, .marker-label').forEach(el => {
+                if (el.textContent && el.textContent.startsWith('N0')) {
+                    el.style.display = '';
+                } else if (el.classList.contains('node')) {
+                    el.style.display = '';
+                }
+            });
+        }
+
+        function showPentagon() {
+            pentagonVisible = !pentagonVisible;
+            const layer = document.getElementById('pentagonLayer');
+
+            if (pentagonVisible) {
+                const nodes = [
+                    { el: document.getElementById('node1'), id: 1 },
+                    { el: document.getElementById('node2'), id: 2 },
+                    { el: document.getElementById('node3'), id: 3 },
+                    { el: document.getElementById('node4'), id: 4 },
+                    { el: document.getElementById('node5'), id: 5 },
+                ];
+
+                let linesHTML = '';
+                const mapArea = document.getElementById('mapArea');
+                const rect = mapArea.getBoundingClientRect();
+
+                for (let i = 0; i < nodes.length; i++) {
+                    const curr = nodes[i];
+                    const next = nodes[(i + 1) % nodes.length];
+                    const cx = parseFloat(curr.el.style.left);
+                    const cy = parseFloat(curr.el.style.top);
+                    const nx = parseFloat(next.el.style.left);
+                    const ny = parseFloat(next.el.style.top);
+
+                    const dx = nx - cx;
+                    const dy = ny - cy;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                    linesHTML += `
+                    <div class="pentagon-line" style="
+                      left:${cx}%;
+                      top:${cy}%;
+                      width:${length}%;
+                      transform:rotate(${angle}deg);
+                    "></div>`;
+                }
+
+                layer.innerHTML = linesHTML;
+                showToast('🔷 五边形连线已显示');
+                document.querySelector('.map-controls button:nth-child(2)').classList.add('active');
+            } else {
+                layer.innerHTML = '';
+                showToast('🔷 五边形连线已隐藏');
+                document.querySelector('.map-controls button:nth-child(2)').classList.remove('active');
+            }
+        }
+
+        function showCenter() {
+            centerVisible = !centerVisible;
+            const centerMarker = document.getElementById('centerMarker');
+            const centerCross = document.getElementById('centerCross');
+            const centerLabel = document.getElementById('centerLabel');
+
+            if (centerVisible) {
+                centerMarker.style.display = '';
+                centerCross.style.display = '';
+                centerLabel.style.display = '';
+                showToast('📍 汇合点已显示：约30.274°N, 120.159°E（废弃工厂）');
+                document.querySelector('.map-controls button:nth-child(3)').classList.add('active');
+            } else {
+                centerMarker.style.display = 'none';
+                centerCross.style.display = 'none';
+                centerLabel.style.display = 'none';
+                showToast('📍 汇合点已隐藏');
+                document.querySelector('.map-controls button:nth-child(3)').classList.remove('active');
+            }
+        }
+
+        function focusNode(num) {
+            const node = document.getElementById('node' + num);
+            if (node) {
+                node.style.transform = 'translate(-50%, -50%) scale(1.6)';
+                node.style.boxShadow = '0 0 0 8px rgba(41,128,185,0.3)';
+                setTimeout(() => {
+                    node.style.transform = 'translate(-50%, -50%) scale(1)';
+                    node.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+                }, 1200);
+                showToast('📍 聚焦 NODE-0' + num);
+            }
+        }
+
+        function showTooltip(event, html) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = html;
+            tooltip.classList.add('show');
+            const mapArea = document.getElementById('mapArea');
+            const rect = mapArea.getBoundingClientRect();
+            tooltip.style.left = (event.clientX - rect.left + 16) + 'px';
+            tooltip.style.top = (event.clientY - rect.top - 40) + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').classList.remove('show');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            switch (e.key.toLowerCase()) {
+                case 'p':
+                    showPentagon();
+                    break;
+                case 'c':
+                    showCenter();
+                    break;
+                case '1':
+                    focusNode(1);
+                    break;
+                case '2':
+                    focusNode(2);
+                    break;
+                case '3':
+                    focusNode(3);
+                    break;
+                case '4':
+                    focusNode(4);
+                    break;
+                case '5':
+                    focusNode(5);
+                    break;
+            }
+        });
+
+        console.log('工业设施地理信息平台已加载。');
+        console.log('五节点呈正五边形，中心点约在 30.274°N, 120.159°E。');
+        console.log('快捷键：P=显示五边形连线 C=显示中心 1-5=聚焦节点');
+    </script>
+</body>
+</html>

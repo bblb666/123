@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技术宅吧 - 百度贴吧</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --text: #1a1a1a;
+            --muted: #999999;
+            --border: #e5e5e5;
+            --primary: #0066cc;
+            --accent: #e8734a;
+            --tag-bg: #e8f0fe;
+            --tag-text: #1a56b8;
+            --reply-bg: #f7f8fa;
+            --hover-bg: #f5f6f8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: #0066cc;
+            color: #fff;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .top-bar .logo {
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .top-bar .nav-links {
+            display: flex;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+        .top-bar .nav-links a {
+            color: #cce0ff;
+            text-decoration: none;
+            font-size: 9px;
+            padding: 3px 7px;
+            border-radius: 2px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .top-bar .nav-links a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 16px auto;
+            padding: 0 16px;
+        }
+
+        .bar-info {
+            background: var(--card);
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        .bar-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #e8f0fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .bar-info-text h3 {
+            font-size: 14px;
+            color: #1a1a1a;
+        }
+        .bar-info-text .stats {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .thread-card {
+            background: var(--card);
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        .thread-card:hover {
+            background: var(--hover-bg);
+            border-color: #ccc;
+        }
+        .thread-card.pinned {
+            border-left: 3px solid var(--accent);
+        }
+        .thread-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+        .thread-preview {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .thread-meta {
+            font-size: 9px;
+            color: var(--muted);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .thread-tag {
+            display: inline-block;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 8px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 620px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 22px;
+            animation: modalIn 0.2s ease;
+        }
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .modal .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal .post-content {
+            font-size: 13px;
+            line-height: 1.8;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .modal .post-content code {
+            background: #f0f0f0;
+            padding: 1px 5px;
+            border-radius: 2px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+        }
+        .modal .reply-item {
+            background: var(--reply-bg);
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+        .modal .reply-item .reply-author {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .reply-box {
+            margin-top: 12px;
+            display: flex;
+            gap: 6px;
+        }
+        .reply-box input {
+            flex: 1;
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .reply-box button {
+            padding: 7px 14px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 9px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            margin-top: 16px;
+        }
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo">💬 技术宅吧</div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="group-chat.html">群聊</a>
+            <a href="qa.html">问答</a>
+            <a href="archive.html">档案馆</a>
+            <a href="map.html">地图</a>
+            <a href="weather.html">环境</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 贴吧信息 -->
+        <div class="bar-info">
+            <div class="bar-avatar">🔧</div>
+            <div class="bar-info-text">
+                <h3>技术宅吧</h3>
+                <div class="stats">关注：48.7万 · 帖子：312万 · 吧主：老工控人</div>
+            </div>
+        </div>
+
+        <!-- 帖子列表 -->
+        <div class="thread-card pinned" onclick="openThread('t1')">
+            <span style="background:#ffe8e0;color:var(--accent);font-size:8px;padding:1px 5px;border-radius:2px;margin-right:4px;">置顶</span>
+            <span class="thread-tag">信号分析</span>
+            <div class="thread-title">【讨论】1.42GHz频段捕获到神秘规律脉冲，疑似扩频信号</div>
+            <div class="thread-preview">用电视棒扫频时发现的，周期大概两分钟左右，求大神分析波形...</div>
+            <div class="thread-meta"><span>👤 无线电宅</span><span>💬 89回复</span><span>📅 04-28</span></div>
+        </div>
+
+        <div class="thread-card" onclick="openThread('t2')">
+            <span class="thread-tag">老设备</span>
+            <div class="thread-title">【求助】翻出一台1998年的变频器，谁能看懂这些参数？</div>
+            <div class="thread-preview">参数4950=0x7A34，这几个值在说明书里找不到，有没有懂FANUC系统的？</div>
+            <div class="thread-meta"><span>👤 设备收藏家</span><span>💬 34回复</span><span>📅 04-27</span></div>
+        </div>
+
+        <div class="thread-card" onclick="openThread('t3')">
+            <span class="thread-tag">坐标</span>
+            <div class="thread-title">【水】发现几个废弃信号塔的坐标，有没有人一起去探险？</div>
+            <div class="thread-preview">坐标如下，五个点刚好围成一个圈，中间好像是个废弃工厂...</div>
+            <div class="thread-meta"><span>👤 城市探险家</span><span>💬 56回复</span><span>📅 04-26</span></div>
+        </div>
+
+        <div class="thread-card" onclick="openThread('t4')">
+            <span class="thread-tag">数学</span>
+            <div class="thread-title">【科普】M序列的周期为什么都是2^n-1？</div>
+            <div class="thread-preview">线性反馈移位寄存器产生的最大长度序列，周期=2^n-1。常见n=7时周期127...</div>
+            <div class="thread-meta"><span>👤 数电爱好者</span><span>💬 23回复</span><span>📅 04-22</span></div>
+        </div>
+
+        <!-- 跨平台 -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:12px;margin-top:10px;">
+            <p style="font-size:9px;color:var(--muted);margin-bottom:6px;">🔗 相关平台</p>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                <a href="forum.html" style="font-size:9px;color:var(--primary);text-decoration:none;padding:3px 8px;background:#f0f4f8;border-radius:3px;">论坛</a>
+                <a href="qa.html" style="font-size:9px;color:var(--primary);text-decoration:none;padding:3px 8px;background:#f0f4f8;border-radius:3px;">问答</a>
+                <a href="map.html" style="font-size:9px;color:var(--primary);text-decoration:none;padding:3px 8px;background:#f0f4f8;border-radius:3px;">地图</a>
+                <a href="archive.html" style="font-size:9px;color:var(--primary);text-decoration:none;padding:3px 8px;background:#f0f4f8;border-radius:3px;">档案馆</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 帖子详情弹窗 -->
+    <div class="modal-overlay" id="threadModal">
+        <div class="modal" id="threadModalContent"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="footer">
+        <p>百度贴吧 · 技术宅吧 | 仅供娱乐交流</p>
+    </div>
+
+    <script>
+        const threads = {
+            't1': {
+                title: '【讨论】1.42GHz频段捕获到神秘规律脉冲',
+                author: '无线电宅',
+                date: '2026-04-28',
+                content: `用RTL-SDR+山寨LNA在1.42GHz扫到的。脉冲间隔大概120-130秒之间，非常规律。
+        录了IQ数据但太大传不上来，放FTP了。
+        有没有懂扩频通信的大神帮忙分析一下？
+        另外脉冲的调制方式看着像BPSK。
+        FTP地址在论坛的帖子里有。`,
+                replies: [
+                    { author: '信号狗', text: '1.42GHz是氢线频率。120-130秒的话，如果刚好127秒那就是2^7-1，M序列无疑。' },
+                    { author: '无线电宅', text: '回复 信号狗：对，我后来仔细数了采样点，确实是127秒。IQ数据在FTP上，采样率2MS/s。' },
+                    { author: '路人甲', text: '这信号塔不是废弃了吗？怎么还在发信号？细思极恐。' },
+                    { author: '老工控人', text: '1998年那批设备装的什么系统我大概知道。你们去档案馆查DOC-1998-0891号文献。' },
+                ]
+            },
+            't2': {
+                title: '【求助】翻出一台1998年的变频器参数问题',
+                author: '设备收藏家',
+                date: '2026-04-27',
+                content: `收破烂收来的SX-720，铭牌上写着/ECHO后缀，不知道是不是定制版。
+        参数4950=0x7A34，4951=0x4C4F，4952=0x434B。
+        有没有大佬知道这三个参数什么意思？说明书上完全没写。
+        另外DIP开关第5位拨上去之后，设备会发出奇怪的嗡嗡声。`,
+                replies: [
+                    { author: '数控达人', text: '0x7A34转ASCII是"z4"，后面两个也是ASCII。三个拼起来就是个单词。' },
+                    { author: '设备收藏家', text: '回复 数控达人：查了ASCII表，三个拼起来是"z4LOCK"。这词啥意思？' },
+                    { author: '老工控人', text: 'z4LOCK是调试模式的解锁密码。去说明书库查SX-720/ECHO的附录文档。' },
+                ]
+            },
+            't3': {
+                title: '【水】发现几个废弃信号塔的坐标',
+                author: '城市探险家',
+                date: '2026-04-26',
+                content: `周末骑摩托逛了一圈，找到五座废弃信号塔。GPS坐标记下来了：
+        塔1：30.2741°N, 120.1551°E
+        塔2：30.2812°N, 120.1623°E
+        塔3：30.2698°N, 120.1698°E
+        塔4：30.2623°N, 120.1612°E
+        塔5：30.2655°N, 120.1489°E
+        五个塔在地图上刚好围成一个圈。中心位置是个废弃工厂。有没有人想组队去探险？`,
+                replies: [
+                    { author: '地图控', text: '这五个坐标构成正五边形。中心点我帮你算了：大约30.274°N, 120.159°E。' },
+                    { author: '城市探险家', text: '回复 地图控：厉害！那个工厂我去过，门锁着但里面好像有机器在运转。' },
+                    { author: '谨慎哥', text: '别随便进去！这种废弃设施可能有辐射或者有毒化学品。' },
+                ]
+            },
+            't4': {
+                title: '【科普】M序列的周期为什么都是2^n-1？',
+                author: '数电爱好者',
+                date: '2026-04-22',
+                content: `给小白科普一下。线性反馈移位寄存器（LFSR）有n个触发器时，全零状态是锁死的，
+        所以最大可能状态数是2^n-1。这就是M序列周期的来源。
+        常见n值：
+        n=7: 周期127
+        n=8: 周期255
+        n=9: 周期511
+        1990年代很多工业通信系统用n=7的配置，因为127在码片速率和处理增益之间平衡最好。`,
+                replies: [
+                    { author: '小白', text: '那127秒的信号周期就是n=7的M序列咯？' },
+                    { author: '数电爱好者', text: '回复 小白：如果周期恰好127秒，且波形呈现伪随机特性，那大概率就是n=7的M序列。' },
+                ]
+            },
+        };
+
+        function openThread(id) {
+            const t = threads[id];
+            if (!t) return;
+            const repliesHTML = t.replies.map(r =>
+                `<div class="reply-item"><span class="reply-author">${r.author}</span>：${r.text}</div>`
+            ).join('');
+            document.getElementById('threadModalContent').innerHTML = `
+                <button class="close-btn" onclick="closeThreadModal()">✕</button>
+                <h3 style="font-size:14px;">${t.title}</h3>
+                <div style="font-size:9px;color:var(--muted);">👤 ${t.author} · 📅 ${t.date}</div>
+                <div class="post-content">${t.content}</div>
+                <div style="margin-top:10px;font-weight:600;font-size:11px;">回复（${t.replies.length}条）</div>
+                ${repliesHTML}
+                <div class="reply-box">
+                  <input type="text" id="replyInput_${id}" placeholder="写回复...">
+                  <button onclick="submitReply('${id}')">发表</button>
+                </div>`;
+            document.getElementById('threadModal').classList.add('show');
+        }
+
+        function submitReply(id) {
+            const input = document.getElementById('replyInput_' + id);
+            const text = input.value.trim();
+            if (!text) { showToast('请输入内容'); return; }
+            threads[id].replies.push({ author: 'Guest_4721', text: text });
+            showToast('回复已发表');
+            input.value = '';
+            openThread(id);
+        }
+
+        function closeThreadModal() {
+            document.getElementById('threadModal').classList.remove('show');
+        }
+        document.getElementById('threadModal').addEventListener('click', function(e) {
+            if (e.target === this) closeThreadModal();
+        });
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工程期刊数据库 - 论文检索</title>
+    <style>
+        :root {
+            --bg: #fafbfc;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --muted: #7f8c8d;
+            --border: #e0e4e8;
+            --primary: #2980b9;
+            --accent: #c0392b;
+            --highlight: #fff9e6;
+            --highlight-border: #f0d060;
+            --redacted-bg: #2c3e50;
+            --redacted-hover: #c0392b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Noto Serif SC', 'STSong', 'SimSun', 'Microsoft YaHei', serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: #1a252f;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .top-bar .logo {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-bar .nav-links {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .top-bar .nav-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .top-bar .nav-links a:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .search-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 18px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .search-box input {
+            flex: 1;
+            min-width: 200px;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .search-box button {
+            padding: 9px 20px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+        .search-box button:hover {
+            background: #1f6da0;
+        }
+
+        .paper-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .paper-card:hover {
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            border-color: #c0c8d0;
+        }
+
+        .paper-card .doi {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: 'SF Mono', 'Consolas', monospace;
+            letter-spacing: 1px;
+        }
+        .paper-card h3 {
+            font-size: 15px;
+            color: #1a1a1a;
+            margin: 6px 0;
+        }
+        .paper-card .authors {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        .paper-card .journal {
+            font-size: 10px;
+            color: var(--primary);
+            font-style: italic;
+        }
+
+        .paper-detail {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        .paper-detail.show {
+            display: block;
+        }
+
+        .redacted-block {
+            background: var(--redacted-bg);
+            color: var(--redacted-bg);
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+            margin: 0 2px;
+        }
+        .redacted-block:hover {
+            background: transparent;
+            color: var(--redacted-hover);
+            font-weight: bold;
+        }
+
+        .redacted-inline {
+            background: var(--redacted-bg);
+            color: var(--redacted-bg);
+            padding: 1px 5px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+        }
+        .redacted-inline:hover {
+            background: transparent;
+            color: var(--redacted-hover);
+        }
+
+        .notice-box {
+            background: #fef9e7;
+            border: 1px solid #f9e79f;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #7d6608;
+            margin-top: 10px;
+        }
+
+        .cross-ref {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--primary);
+            text-decoration: none;
+            padding: 3px 9px;
+            background: #eaf2f8;
+            border-radius: 3px;
+            transition: background 0.15s;
+        }
+        .cross-ref:hover {
+            background: #d4e6f1;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1a252f;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .paper-card {
+                padding: 14px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="logo">📑 工程期刊数据库</div>
+        <div class="nav-links">
+            <a href="forum.html">← 论坛</a>
+            <a href="archive.html">档案馆</a>
+            <a href="doc-share.html">文档</a>
+            <a href="mailbox.html">邮箱</a>
+            <a href="blog.html">博客</a>
+            <a href="news.html">新闻</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索论文标题、作者、关键词..." value="ECHO project 1998 spread spectrum">
+            <button onclick="searchPapers()">🔍 检索</button>
+        </div>
+
+        <div id="resultsArea">
+
+            <!-- 论文1：核心论文（删节版） -->
+            <div class="paper-card" onclick="togglePaper('paper1')">
+                <div class="doi">DOI: 10.1998/ECHO.SP.001</div>
+                <h3>基于工业设备的分布式扩频通信网络设计</h3>
+                <div class="authors">张明远， 李建国， 王洪涛</div>
+                <div class="journal">工业自动化与通信学报，1998年 第12卷 第4期</div>
+                <div class="paper-detail" id="paper1">
+                    <p><strong>摘要：</strong></p>
+                    <p>本文提出了一种利用现有工业设备作为信号中继节点的分布式通信网络架构。
+                        系统采用<span class="redacted-inline">BPSK</span>调制方式，
+                        在<span class="redacted-inline">1.42GHz</span>频段上实现扩频通信。
+                        扩频序列采用长度为<span class="redacted-inline">127</span>的M序列，
+                        对应本原多项式为<span class="redacted-inline">x^7 + x^3 + 1</span>。</p>
+                    <p><strong>关键词：</strong>扩频通信；M序列；工业自动化；分布式网络</p>
+
+                    <div class="notice-box">
+                        ⚠ <strong>注意：</strong>此论文摘要之后的内容已被删节。
+                        共<span style="color:#c0392b;">38页</span>正文仅保留前2页。
+                        完整版本需查阅邮件附件或档案馆存档。
+                        <br>📬 完整版论文见：<a href="mailbox.html" class="cross-ref">内部邮箱 → email2</a>
+                        <br>📚 档案馆编号：<a href="archive.html" class="cross-ref">DOC-1999-0037</a>
+                    </div>
+
+                    <p style="margin-top:10px;"><strong>第2页残存内容：</strong></p>
+                    <p>通信节点采用<span class="redacted-block">正五边形</span>拓扑结构，
+                        共部署<span class="redacted-block">5</span>个节点。
+                        每个节点配备SX-720/<span class="redacted-block">ECHO</span>型变频器作为载波发生器。
+                        节点坐标详见附录A（<span class="redacted-block">已删节</span>）。</p>
+                </div>
+            </div>
+
+            <!-- 论文2：M序列研究 -->
+            <div class="paper-card" onclick="togglePaper('paper2')">
+                <div class="doi">DOI: 10.1997/MSEQ.TH.003</div>
+                <h3>M序列在工业扩频通信中的应用研究</h3>
+                <div class="authors">张明远</div>
+                <div class="journal">通信技术研究，1997年 第8卷 第2期</div>
+                <div class="paper-detail" id="paper2">
+                    <p><strong>摘要：</strong></p>
+                    <p>本文系统地分析了M序列（最大长度序列）在工业扩频通信中的应用。
+                        M序列由线性反馈移位寄存器（LFSR）产生，其最大周期为2^n - 1。</p>
+                    <p>常见的周期长度包括：</p>
+                    <p style="padding-left:20px;">
+                        n=7：周期 = <span class="redacted-inline">127</span><br>
+                        n=8：周期 = 255<br>
+                        n=9：周期 = 511<br>
+                        n=10：周期 = 1023
+                    </p>
+                    <p>其中<span class="redacted-inline">127</span>（2^7-1）在1990年代的工业通信系统中得到了广泛应用，
+                        因其在码片速率与处理增益之间取得了良好的平衡。</p>
+                    <p style="color:#7f8c8d; font-size:11px;">📝 此论文为回声计划中M序列选择的理论基础。</p>
+                    <a href="qa.html" class="cross-ref">❓ 相关讨论见问答平台 →</a>
+                </div>
+            </div>
+
+            <!-- 论文3：FANUC参数研究 -->
+            <div class="paper-card" onclick="togglePaper('paper3')">
+                <div class="doi">DOI: 10.1998/FANUC.PA.007</div>
+                <h3>FANUC 16i系统预留参数区的扩展应用</h3>
+                <div class="authors">陈志强， 刘启明</div>
+                <div class="journal">数控技术，1998年 第5卷 第3期</div>
+                <div class="paper-detail" id="paper3">
+                    <p><strong>摘要：</strong></p>
+                    <p>FANUC 16i数控系统的参数区域4950-4970为厂商预留区域。
+                        本文探讨了利用该区域存储<span class="redacted-inline">自定义编码</span>的可行性。</p>
+                    <p>实验表明，参数4950-4952可存储<span class="redacted-inline">3字节</span>的ASCII编码数据。
+                        以十六进制写入后，可通过系统诊断界面读取。</p>
+                    <p>示例：</p>
+                    <p style="padding-left:20px; font-family:'SF Mono','Consolas',monospace; font-size:12px;">
+                        参数4950 = 0x7A34<br>
+                        参数4951 = 0x4C4F<br>
+                        参数4952 = 0x434B
+                    </p>
+                    <p>转换为ASCII字符串后为：<span class="redacted-inline">z4LOCK</span></p>
+                    <p style="color:#7f8c8d; font-size:11px;">📝 该字符串可用于解锁系统的隐藏调试模式。</p>
+                    <a href="manual.html" class="cross-ref">📖 完整参数表见说明书库 →</a>
+                </div>
+            </div>
+
+            <!-- 论文4：BPSK研究 -->
+            <div class="paper-card" onclick="togglePaper('paper4')">
+                <div class="doi">DOI: 10.1996/BPSK.AP.012</div>
+                <h3>BPSK调制在低信噪比环境下的性能分析</h3>
+                <div class="authors">李建国</div>
+                <div class="journal">信号处理学报，1996年 第3卷 第1期</div>
+                <div class="paper-detail" id="paper4">
+                    <p><strong>摘要：</strong></p>
+                    <p>二进制相移键控（BPSK）是扩频通信中最常用的调制方式之一。
+                        本文分析了BPSK在<span class="redacted-inline">-10dB至-20dB</span>信噪比条件下的误码率表现。</p>
+                    <p>研究表明，结合<span class="redacted-inline">127位</span>M序列扩频后，
+                        BPSK信号可在极低信噪比下实现可靠的数据传输。</p>
+                    <p>这一特性使其适用于<span class="redacted-inline">工业电磁噪声环境</span>下的隐蔽通信。</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 跨平台导航 -->
+        <div style="background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 18px; margin-top:16px;">
+            <p style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;">🔗 关联平台</p>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <a href="mailbox.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">📬 邮箱（完整论文）</a>
+                <a href="archive.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">📚 档案馆</a>
+                <a href="manual.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">📖 说明书</a>
+                <a href="qa.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">❓ 问答平台</a>
+                <a href="doc-share.html" style="font-size:10px;color:var(--primary);text-decoration:none;padding:4px 10px;background:#eaf2f8;border-radius:3px;">📄 文档平台</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer class="footer">
+        <p>© 2026 工程期刊数据库 | 学术文献检索系统</p>
+        <p style="margin-top:4px;">
+            <a href="mailbox.html">邮箱</a> ·
+            <a href="archive.html">档案馆</a> ·
+            <a href="manual.html">手册</a> ·
+            <a href="qa.html">问答</a> ·
+            <a href="doc-share.html">文档</a>
+        </p>
+    </footer>
+
+    <script>
+        function togglePaper(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('show');
+                if (el.classList.contains('show') && id === 'paper1') {
+                    showToast('⚠ 论文大部分内容已删节，完整版见邮箱附件');
+                }
+            }
+        }
+
+        function searchPapers() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query.toLowerCase().includes('echo') || query.toLowerCase().includes('1998')) {
+                showToast('🔍 找到4篇相关论文，点击标题展开详情');
+                document.getElementById('paper1').classList.add('show');
+                document.getElementById('paper1').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                showToast('🔍 搜索完成。试试关键词：ECHO project 1998');
+            }
+        }
+
+        document.querySelectorAll('.redacted-inline, .redacted-block').forEach(el => {
+            el.addEventListener('dblclick', function(e) {
+                e.stopPropagation();
+                showToast('🔍 隐藏内容：' + this.textContent);
+            });
+        });
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        document.getElementById('searchInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchPapers();
+        });
+
+        console.log('工程期刊数据库已加载。');
+        console.log('核心论文：paper1 被删节，完整版在 mailbox.html 的 email2 附件中。');
+        console.log('关键信息：BPSK、1.42GHz、M序列127、正五边形5节点、参数4950-4952=z4LOCK');
+    </script>
+</body>
+</html>
